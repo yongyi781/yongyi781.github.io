@@ -10,35 +10,36 @@
     <title>Mouse Test</title>
 </head>
 <body>
-    <h2>Mouse Test</h2>
-    <div id="wrap">
-        <div id="lastResult" class="message message-top-left"></div>
-        <div id="cumulativeResults" class="message message-bottom-left"></div>
-        <div id="stage" class="stage"></div>
-        <div id="startGame" class="message clickable">Start</div>
-        <div id="message" class="message" style="display: none;"></div>
+    <div class="container">
+        <h2>Mouse Test</h2>
+        <div id="wrap">
+            <div id="lastResult" class="message message-top-left"></div>
+            <div id="cumulativeResults" class="message message-bottom-left"></div>
+            <div id="stage" class="stage"></div>
+            <div id="startGame" class="message clickable">Start</div>
+            <div id="message" class="message" style="display: none;"></div>
+        </div>
+        <h3>Results</h3>
+        <div>
+            Here, <em>deading</em> refers to the server responding on the immediate tick after your click, instead of lagging and delaying to the next tick.
+            <h6 class="text-center">Probability of deading vs. latency</h6>
+            <canvas id="pingGraphCanvas" width="768" height="384" style="display: block; margin: auto"></canvas>
+            <h4>Raw graph data</h4>
+            <pre id="rawGraphData" class="text-nowrap"></pre>
+        </div>
+        <h3>Raw data</h3>
+        <pre id="rawData" class="text-nowrap">
+        </pre>
+        <h3>Advanced</h3>
+        You can customize this game by adding the following parameters to the URL query string:
+        <ul>
+            <li><code>bg=&lt;color&gt;</code>: The background color. Any format recognized by CSS is accepted.</li>
+            <li><code>orbsize=&lt;positive integer&gt;</code>: Orb size in pixels.</li>
+            <li><code>count=&lt;nonnegative integer&gt;</code>: The number of ticks to countdown. 0 means that the orb spawns in the next immediate tick.</li>
+            <li><code>rand=&lt;0|1&gt;</code>: Whether to spawn the orb at a random time instead of a fixed time.</li>
+            <li><code>team=&lt;vief|acantha&gt;</code>: Whether to use yellow orbs or green orbs.</li>
+        </ul>
     </div>
-    <h3>Results</h3>
-    <div>
-        Here, <em>deading</em> refers to the server responding on the immediate tick after your click, instead of lagging and delaying to the next tick.
-        <h6 class="text-center">Probability of deading vs. latency</h6>
-        <canvas id="pingGraphCanvas" width="768" height="384" style="display: block; margin: auto"></canvas>
-        <h4>Raw graph data</h4>
-        <pre id="rawGraphData" class="text-nowrap"></pre>
-    </div>
-    <h3>Raw data</h3>
-<pre id="rawData" class="text-nowrap">
-</pre>
-    <h3>Advanced</h3>
-    You can customize this game by adding the following parameters to the URL query string:
-    <ul>
-        <li><code>bg=&lt;color&gt;</code>: The background color. Any format recognized by CSS is accepted.</li>
-        <li><code>orbsize=&lt;positive integer&gt;</code>: Orb size in pixels.</li>
-        <li><code>count=&lt;nonnegative integer&gt;</code>: The number of ticks to countdown. 0 means that the orb spawns in the next immediate tick.</li>
-        <li><code>rand=&lt;0|1&gt;</code>: Whether to spawn the orb at a random time instead of a fixed time.</li>
-        <li><code>team=&lt;vief|acantha&gt;</code>: Whether to use yellow orbs or green orbs.</li>
-    </ul>
-
     <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
