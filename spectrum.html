@@ -166,7 +166,7 @@
                 falloff = 6;
             }
 
-            if (windowSize <= 2) {
+            if (windowSize <= 4) {
                 // Return weighted average of neighbors
                 var t = x % 1;
                 var y = (1 - t) * data[Math.floor(x)] + t * data[Math.ceil(x)];
@@ -174,7 +174,7 @@
             }
 
             var low = Math.floor(x - windowSize/2);
-            var high = Math.ceil(x + windowSize/2);
+            var high = Math.max(low + 1, Math.ceil(x + windowSize/2));
 
             var avg = 0;
             for (var i = low; i <= high; i++) {
@@ -205,9 +205,9 @@
 
                 var falloff = $("#falloff").val();
                 for (var y = 0; y < height; y++) {
-                    var frequency = (y + 0.5) * hzPerPixel;
-                    var intensity = getIntensity(frequency / hzPerBin, data, 1.5 * hzPerPixel / hzPerBin, gain, falloff);
+                    var intensity = getIntensity(y * hzPerPixel / hzPerBin, data, 2 * hzPerPixel / hzPerBin, gain, falloff);
 
+                    var frequency = (y + 0.5) * hzPerPixel;
                     context.fillStyle = getColor(getPitch(frequency).pitch, intensity);
                     context.fillRect(frame % width, height - 1 - y, 1, 1);
                 }
