@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -26,8 +26,12 @@
 <body>
     <div class="container">
         <h1>Pitch spectrum analyzer</h1>
-        <div class="form-inline">
+        <div id="pureTone" class="form-inline">
             <label for="frequency">Pure tone frequency:</label> <input type="number" class="form-control" id="frequency" value="880" />
+            <button class="btn btn-outline-primary" data-semitones="-1">-1</button>
+            <button class="btn btn-outline-primary" data-semitones="1">+1</button>
+            <button class="btn btn-outline-primary" data-semitones="-12">-12</button>
+            <button class="btn btn-outline-primary" data-semitones="12">+12</button>
             <input type="number" class="form-control" id="volume" value="-25" />
             <button id="play" class="btn btn-primary">Play</button>
             <button id="record" class="btn btn-primary">Start recording</button>
@@ -49,8 +53,8 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
-    <script src="https://tonejs.github.io/CDN/latest/Tone.js"></script>
-    <script>
+    <script src="https://tonejs.github.io/build/Tone.min.js"></script>
+    <!--<script>
         // Fix for close not working for external input > 0
 
         /**
@@ -67,7 +71,7 @@
             }
             return this;
         };
-    </script>
+    </script>-->
     <script src="https://d3js.org/d3.v4.min.js"></script>
 
     <script>
@@ -94,7 +98,7 @@
         analyser.returnType = Tone.Analyser.ReturnType.Float;
         analyser.smoothing = 0;
 
-        var mic = new Tone.ExternalInput(null);
+        var mic = new Tone.UserMedia(null);
         var isMicOpened = false;
         mic.connect(analyser);
         synth.connect(analyser);
@@ -103,26 +107,6 @@
         var audioSrc = Tone.context.createMediaElementSource(audio);
         audioSrc.connect(analyser._analyser);
         audioSrc.connect(Tone.context.destination);
-
-        $("#frequency").on("input", function () {
-            synth.frequency.value = $(this).val();
-        });
-
-        $("#volume").on("input", function () {
-            synth.volume.value = $(this).val();
-        });
-
-        $("#play").click(function () {
-            if (isPureTonePlaying) {
-                isPureTonePlaying = false;
-                synth.triggerRelease();
-                $(this).text("Start");
-            } else {
-                isPureTonePlaying = true;
-                synth.triggerAttack(synth.frequency.value);
-                $(this).text("Stop");
-            }
-        });
 
         // Frequency analysis
 
@@ -226,14 +210,34 @@
 
         $(window).resize(resizeCanvas);
 
+        $("#frequency").on("input", function () {
+            synth.frequency.value = $(this).val();
+        });
+
+        $("#volume").on("input", function () {
+            synth.volume.value = $(this).val();
+        });
+
+        $("#play").click(function () {
+            if (isPureTonePlaying) {
+                isPureTonePlaying = false;
+                synth.triggerRelease();
+                $(this).text("Start");
+            } else {
+                isPureTonePlaying = true;
+                synth.triggerAttack(synth.frequency.value);
+                $(this).text("Stop");
+            }
+        });
+
         $("#record").click(function () {
             if (isMicOpened) {
                 isMicOpened = false;
-                mic.stop().close();
+                mic.close();
                 $(this).text("Start recording");
             } else {
                 isMicOpened = true;
-                mic.start().open();
+                mic.open();
                 $(this).text("Stop recording");
             }
         });
@@ -252,6 +256,12 @@
             if (e.currentTarget.files.length > 0) {
                 document.querySelector("audio").src = URL.createObjectURL(e.currentTarget.files[0]);
             }
+        });
+
+        $("#pureTone button[data-semitones]").click(function () {
+            var newFreq = $("#frequency").val() * Math.pow(2, $(this).data("semitones") / 12);
+            synth.frequency.value = newFreq;
+            $("#frequency").val(newFreq);
         });
 
         resizeCanvas();
