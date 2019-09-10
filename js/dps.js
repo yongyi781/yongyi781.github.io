@@ -199,7 +199,7 @@ for (let i = 0; i < dwMeleeAbilityList.length; i++) {
 }
 
 class AbilityManager {
-    constructor(abilityList = dwMeleeAbilityList, abilityDamage = 1993, preciseRank = 4, equilibriumRank = 2, bitingRank = 3, additiveBoost = 0, multiplicativeBoost = 1) {
+    constructor(abilityList = magicAbilityList, abilityDamage = 1993, preciseRank = 4, equilibriumRank = 2, bitingRank = 3, additiveBoost = 0, multiplicativeBoost = 1) {
         this.abilityList = abilityList;
         this.abilityDamage = abilityDamage;
         this.preciseRank = preciseRank;
