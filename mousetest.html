@@ -1,14 +1,17 @@
 ﻿<!DOCTYPE html>
 <html>
+
 <head>
     <meta charset='utf-8' />
     <meta name="description" content="Mouse test" />
 
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="stylesheets/mousetest.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/mousetest.css">
 
     <title>Mouse Test</title>
 </head>
+
 <body>
     <div class="container">
         <h2>Mouse Test</h2>
@@ -21,7 +24,8 @@
         </div>
         <h3>Results</h3>
         <div>
-            Here, <em>deading</em> refers to the server responding on the immediate tick after your click, instead of lagging and delaying to the next tick.
+            Here, <em>deading</em> refers to the server responding on the immediate tick after your click, instead of
+            lagging and delaying to the next tick.
             <h6 class="text-center">Probability of deading vs. latency</h6>
             <canvas id="pingGraphCanvas" width="768" height="384" style="display: block; margin: auto"></canvas>
             <h4>Raw graph data</h4>
@@ -35,14 +39,18 @@
         <ul>
             <li><code>bg=&lt;color&gt;</code>: The background color. Any format recognized by CSS is accepted.</li>
             <li><code>orbsize=&lt;positive integer&gt;</code>: Orb size in pixels.</li>
-            <li><code>count=&lt;nonnegative integer&gt;</code>: The number of ticks to countdown. 0 means that the orb spawns in the next immediate tick.</li>
+            <li><code>count=&lt;nonnegative integer&gt;</code>: The number of ticks to countdown. 0 means that the orb
+                spawns in the next immediate tick.</li>
             <li><code>rand=&lt;0|1&gt;</code>: Whether to spawn the orb at a random time instead of a fixed time.</li>
             <li><code>team=&lt;vief|acantha&gt;</code>: Whether to use yellow orbs or green orbs.</li>
         </ul>
     </div>
-    <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
     <script>
         $(function () {
             var gameWidth = 960,
@@ -250,4 +258,5 @@
         });
     </script>
 </body>
+
 </html>
