@@ -30,7 +30,7 @@
             overflow-x: hidden;
         }
 
-        .form-inline > * {
+        .form-inline>* {
             margin: 0 1px;
         }
     </style>
@@ -39,8 +39,13 @@
 <body>
     <div class="container">
         <h1>Pitch spectrum analyzer</h1>
-        <div class="form-group">
-            <select class="form-control" id="microphones"></select>
+        <div class="form-group form-row">
+            <div class="col-sm-8">
+                <select class="form-control" id="microphones"></select>
+            </div>
+            <div class="col-sm-4">
+                <button id="record" class="btn btn-primary btn-block">Start recording</button>
+            </div>
         </div>
         <div id="pureTone" class="form-inline">
             <label for="frequency">Pure tone frequency:</label> <input type="number" class="form-control" id="frequency"
@@ -51,7 +56,6 @@
             <button class="btn btn-outline-primary" data-semitones="12">+12</button>
             <input type="number" class="form-control" id="volume" value="-25" />
             <button id="play" class="btn btn-primary">Play</button>
-            <button id="record" class="btn btn-primary">Start recording</button>
         </div>
         <div>
             <input id="audioFile" type="file" class="full-width" />
