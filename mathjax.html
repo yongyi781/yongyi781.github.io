@@ -74,7 +74,7 @@
     <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
         var isTypesetting = false;
-        var defaultText = "Let $$x$$ be a solution to $$ax^2+bx+c=0$$. Then \\[x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}.\\]";
+        var defaultText = "Let $$x$$ be a solution to $$ax^2+bx+c=0$$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]";
 
         function convert() {
             let input = document.querySelector("#input").value.trim();
@@ -84,7 +84,7 @@
                 return;
             }
             let output = document.querySelector("#output");
-            output.innerHTML = input;
+            output.textContent = input;
 
             MathJax.texReset();
             MathJax.typesetClear();
