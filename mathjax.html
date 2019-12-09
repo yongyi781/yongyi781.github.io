@@ -45,7 +45,7 @@
     <script>
         let urlParams = new URLSearchParams(window.location.search);
         let mathbotStyleStr = urlParams.get("mathbot");
-        let mathbotStyle = mathbotStyleStr == null || mathbotStyleStr == "true" || mathbotStyleStr == "1";
+        let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1";
 
         inlineChar = mathbotStyle ? "$$" : "$";
         displayMath = [["\\[", "\\]"]];
