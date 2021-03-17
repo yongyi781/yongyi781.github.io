@@ -32,12 +32,6 @@
     <div class="container">
 
         <h1>MathJax Live Preview</h1>
-        <div class="form-group form-check">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input" id="useMathBot"> Use MathBot delimiters
-            </label>
-        </div>
-
         <textarea class="form-control" id="input" rows="15"></textarea>
         <div id="output"></div>
     </div>
@@ -52,8 +46,6 @@
         if (!mathbotStyle) {
             displayMath.push(["$$", "$$"]);
         }
-
-        document.querySelector("#useMathBot").checked = mathbotStyle;
 
         let macros = {};
 
@@ -97,11 +89,6 @@
         }
 
         document.querySelector("#input").addEventListener("keyup", convert);
-        
-        let useMathBot = document.querySelector("#useMathBot");
-        useMathBot.addEventListener("change", () => {
-            window.location.search = "mathbot=" + useMathBot.checked;
-        });
 
         document.querySelector("#input").value = localStorage.getItem("content") || defaultText;
         convert();
