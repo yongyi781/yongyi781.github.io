@@ -5,14 +5,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <title>Pitch Spectrum Analyzer</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
-        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
-        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
-        integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
-        crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.3/Tone.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+        integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.17/Tone.js"></script>
     <style>
         canvas {
             background-color: black;
@@ -71,7 +68,7 @@
             <span id="pitch"></span>
         </div>
         <div id="analysisContainer">
-            <canvas id="analysisCanvas" width="0" height="576"></canvas>
+            <canvas id="analysisCanvas" width="0" height="720"></canvas>
         </div>
     </div>
 
@@ -87,7 +84,7 @@
                 var track = this._stream.getTracks()[0];
                 if (!this.isUndef(track)){
                     track.stop();
-                } 
+                }
                 this._stream = null;
             }
             return this;
@@ -136,7 +133,7 @@
                 releaseCurve: "sine"
             }
         });
-        synth.toMaster();
+        synth.toDestination();
         synth.frequency.value = $("#frequency").val();
         synth.volume.value = $("#volume").val();
 
