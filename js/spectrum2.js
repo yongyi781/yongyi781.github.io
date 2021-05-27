@@ -1,7 +1,8 @@
 const canvas = document.querySelector("canvas");
-const offCanvas = new OffscreenCanvas(canvas.width, canvas.height);
+const offCanvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 const offCtx = offCanvas.getContext("2d");
+const message = document.querySelector("#message");
 const C0 = 440 / Math.pow(2, 4 + 9 / 12);
 let stream, source;
 /** @type AnalyserNode */
@@ -18,7 +19,7 @@ let lastX, lastY, lastFreq = 880;
 let pauseButton;
 
 let config = {
-    audioDevice: null,
+    audioDevice: "",
     logarithmic: true,
     minFreq: 65.3,
     maxFreq: 2093,
@@ -41,7 +42,7 @@ let config = {
         offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height);
     }
 }
-let audioContext = new AudioContext({ sampleRate: config.sampleRate });
+let audioContext;
 
 function dbToGain(db) {
     return Math.pow(10, db / 20);
@@ -93,24 +94,48 @@ function getMusicalPitch(freq) {
 }
 
 function createAnalyser() {
-    if (source !== null) {
+    if (source != null) {
         source.disconnect();
     }
     analyser = audioContext.createAnalyser();
     analyser.smoothingTimeConstant = 0;
     updateFFTSize();
-    source.connect(analyser);
+    if (source != null) {
+        source.connect(analyser);
+    }
 }
 
 async function setSampleRate(sampleRate) {
     if (config.sampleRate !== sampleRate) {
         config.sampleRate = sampleRate;
     }
-    if (audioContext !== null) {
+    if (audioContext != null) {
         await audioContext.close();
+        audioContext = null;
     }
-    audioContext = new AudioContext({ sampleRate });
-    source = audioContext.createMediaStreamSource(stream);
+    await createAudioContext();
+}
+
+async function createAudioContext() {
+    if (audioContext != null) {
+        audioContext.close();
+        audioContext = null;
+    }
+    try {
+        audioContext = new AudioContext({ sampleRate: config.sampleRate });
+        if (stream != null) {
+            source = audioContext.createMediaStreamSource(stream);
+        }
+    }
+    catch (e) {
+        console.log(`Caught: ${e}`);
+        audioContext.close();
+        // Probably sample rate not supported.
+        audioContext = new AudioContext();
+        if (stream != null) {
+            source = audioContext.createMediaStreamSource(stream);
+        }
+    }
     createAnalyser();
 }
 
@@ -119,8 +144,7 @@ async function setAudioDevice(deviceId) {
         source.disconnect();
     }
     stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId } });
-    source = audioContext.createMediaStreamSource(stream);
-    createAnalyser();
+    await createAudioContext();
 }
 
 async function initMicrophoneList() {
@@ -132,15 +156,14 @@ async function initMicrophoneList() {
         for (let d of devices) {
             if (d.kind === "audioinput") {
                 audioDevices[d.label] = d.deviceId;
-                if (d.label.indexOf("Stereo Mix") !== -1) {
-                    config.audioDevice = d.deviceId;
-                    await setAudioDevice(config.audioDevice);
-                }
             }
         }
+        let key = Object.keys(audioDevices).find(s => s.indexOf("Stereo Mix") !== -1);
+        config.audioDevice = audioDevices[key] || Object.values(audioDevices)[0];
+        await setAudioDevice(config.audioDevice);
     }
     catch (e) {
-        console.error(e);
+        message.textContent = e;
     }
 }
 
@@ -152,8 +175,10 @@ function resizeCanvas() {
 }
 
 function updateFFTSize() {
-    analyser.fftSize = Math.pow(2, config.fftSize);
-    freqData = new Float32Array(analyser.frequencyBinCount);
+    if (analyser != null) {
+        analyser.fftSize = Math.pow(2, config.fftSize);
+        freqData = new Float32Array(analyser.frequencyBinCount);
+    }
 }
 
 function updateOscillatorFreq(x, y) {
@@ -169,7 +194,7 @@ function updateOscillatorFreq(x, y) {
 }
 
 function render() {
-    if (config.running) {
+    if (config.running && analyser != null) {
         analyser.getFloatFrequencyData(freqData);
         const maxDb = Math.max.apply(null, freqData);
         const gain = Math.min(50, -maxDb);
@@ -221,11 +246,11 @@ function render() {
     let str = `${freq.toFixed(1)} Hz = ${p.name}${p.octave} (${p.cents < 0 ? "−" : "+"}${Math.abs(p.cents.toFixed(0))})`;
     let metrics = ctx.measureText(str);
     window.metrics = metrics;
-    let x = Math.min(lastX + 6, canvas.width - metrics.width);
-    let y = Math.max(oscY - 12, metrics.fontBoundingBoxAscent);
+    let x = Math.min(lastX + 6, canvas.width - metrics.width - 3);
+    let y = Math.max(oscY - 12, metrics.actualBoundingBoxAscent + 3);
     let color = getColor(getPitch(freq), oscillator == null ? 0.5 : 1).toString();
     ctx.fillStyle = oscillator == null ? "#ccc" : color;
-    ctx.font = "16px Open Sans";
+    ctx.font = "16px 'Open Sans', 'Lucida Grande', 'Verdana', sans-serif";
     ctx.fillText(str, x, y);
 
     // Draw frequency circle
@@ -265,6 +290,7 @@ canvas.addEventListener("mousemove", e => {
 resizeCanvas();
 
 (async () => {
+    setSampleRate(config.sampleRate);
     await initMicrophoneList();
 
     let gui = new dat.GUI({ name: "Hello", width: 300 });
@@ -275,7 +301,7 @@ resizeCanvas();
     gui.add(config, "logarithmic").name("Logarithmic scale?");
     const minFreqControl = gui.add(config, "minFreq", 1, 22050, 1);
     const maxFreqControl = gui.add(config, "maxFreq", 2, 22050, 1);
-    const sampleRateControl = gui.add(config, "sampleRate", 3000, 44100, 1).name("Sample rate").onFinishChange(setSampleRate);
+    const sampleRateControl = gui.add(config, "sampleRate", 3000, 48000, 1).name("Sample rate").onFinishChange(setSampleRate);
     minFreqControl.name("Min frequency").onFinishChange(() => {
         config.maxFreq = Math.max(config.minFreq, config.maxFreq);
         maxFreqControl.updateDisplay();
