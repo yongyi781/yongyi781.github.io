@@ -19,17 +19,20 @@ let pauseButton;
 
 let config = {
     audioDevice: null,
-    logarithmic: false,
+    logarithmic: true,
     minFreq: 65.3,
     maxFreq: 2093,
     sampleRate: 8000,
     minDb: -100,
     slope: 0.07,
     running: true,
-    oscillatorVolume: -35,
     colorWheelOffset: 0.25,
     fftSize: 12,
-    lineDrawMode: "Notes",
+    octaveDivision: 12,
+    octaveFreq: 440 / Math.pow(2, 9 / 12),
+    oscillatorVolume: -35,
+    oscillatorType: "sine",
+    oscillatorSnap: false,
     pauseOrResume: function () {
         this.running = !this.running;
         pauseButton.name(this.running ? "Pause" : "Resume");
@@ -57,15 +60,28 @@ function reverseInterpolate(min, max, value) {
     return (value - min) / (max - min);
 }
 
+function yToFreq(y) {
+    return interpolate(config.minFreq, config.maxFreq, 1 - y / canvas.height);
+}
+
+function freqToY(freq) {
+    return (1 - reverseInterpolate(config.minFreq, config.maxFreq, freq)) * canvas.height;
+}
+
 function getColor(pitch, intensity) {
     intensity = Math.max(0, Math.min(1, intensity));
     var hue = (pitch + config.colorWheelOffset) % 1;
     return d3.cubehelix(360 * hue, 1, 0.65 * intensity);
 }
 
+// Returns 0-1, 0 corresponds to C.
 function getPitch(freq) {
     const pitch = Math.log2(freq / C0);
     return pitch - Math.floor(pitch);
+}
+
+function roundPitch(freq) {
+    return config.octaveDivision === 0 ? freq : Math.pow(2, Math.round(Math.log2(freq / config.octaveFreq) * config.octaveDivision) / config.octaveDivision) * config.octaveFreq;
 }
 
 function getMusicalPitch(freq) {
@@ -144,7 +160,11 @@ function updateOscillatorFreq(x, y) {
     lastX = x;
     lastY = y;
     if (oscillator != null) {
-        oscillator.frequency.value = interpolate(config.minFreq, config.maxFreq, 1 - y / canvas.height);
+        let freq = yToFreq(y);
+        if (config.oscillatorSnap) {
+            freq = roundPitch(freq);
+        }
+        oscillator.frequency.value = freq;
     }
 }
 
@@ -159,7 +179,7 @@ function render() {
 
         // Make h x 1 image data from frequency data
         for (let y = 0, i = 0; y < canvas.height; y++) {
-            let freq = interpolate(config.minFreq, config.maxFreq, 1 - y / offCanvas.height);
+            let freq = yToFreq(y);
             let bin = Math.round(freq / audioContext.sampleRate * 2 * analyser.frequencyBinCount);
             let v = freqData[bin];
             if (v < config.minDb) {
@@ -180,14 +200,13 @@ function render() {
     ctx.drawImage(offCanvas, 0, 0);
 
     // Draw lines
-    if (config.lineDrawMode === "Notes" || config.lineDrawMode === "Octaves") {
-        let f = config.lineDrawMode === "Notes" ? 12 : 1;
-        const minPitch = Math.ceil(Math.log2(config.minFreq / C0) * f);
-        const maxPitch = Math.floor(Math.log2(config.maxFreq / C0) * f);
-        ctx.strokeStyle = "#888";
+    if (config.octaveDivision > 0) {
+        const minPitch = Math.ceil(Math.log2(config.minFreq / config.octaveFreq) * config.octaveDivision);
+        const maxPitch = Math.floor(Math.log2(config.maxFreq / config.octaveFreq) * config.octaveDivision);
+        ctx.lineWidth = 1;
         for (let i = minPitch; i <= maxPitch; i++) {
-            ctx.lineWidth = i % f === 0 ? 1.5 : 0.5;
-            let y = Math.round((1 - reverseInterpolate(config.minFreq, config.maxFreq, C0 * Math.pow(2, i / f))) * canvas.height);
+            ctx.strokeStyle = i % config.octaveDivision === 0 ? "#ffffff66" : "#ffffff22";
+            let y = Math.round(freqToY(config.octaveFreq * Math.pow(2, i / config.octaveDivision))) + 0.5;
             ctx.beginPath();
             ctx.moveTo(0, y);
             ctx.lineTo(canvas.width, y);
@@ -196,40 +215,45 @@ function render() {
     }
 
     // Draw frequency text
-    let freq = interpolate(config.minFreq, config.maxFreq, 1 - lastY / canvas.height);
+    const oscY = config.oscillatorSnap ? freqToY(roundPitch(yToFreq(lastY))) : lastY;
+    let freq = yToFreq(oscY);
     let p = getMusicalPitch(freq);
     let str = `${freq.toFixed(1)} Hz = ${p.name}${p.octave} (${p.cents < 0 ? "−" : "+"}${Math.abs(p.cents.toFixed(0))})`;
     let metrics = ctx.measureText(str);
     window.metrics = metrics;
     let x = Math.min(lastX + 6, canvas.width - metrics.width);
-    let y = Math.max(lastY - 12, metrics.fontBoundingBoxAscent);
+    let y = Math.max(oscY - 12, metrics.fontBoundingBoxAscent);
     let color = getColor(getPitch(freq), oscillator == null ? 0.5 : 1).toString();
     ctx.fillStyle = oscillator == null ? "#ccc" : color;
     ctx.font = "16px Open Sans";
     ctx.fillText(str, x, y);
+
+    // Draw frequency circle
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(lastX, lastY, 4, 0, 2 * Math.PI);
+    ctx.arc(lastX, oscY, 4, 0, 2 * Math.PI);
     ctx.fill();
+
     requestAnimationFrame(render);
 }
 
 window.addEventListener("resize", resizeCanvas);
 canvas.addEventListener("mousedown", e => {
-    if (oscillator != null) {
+    if (oscillator != null || e.button !== 0) {
         return;
     }
-    oscillator = audioContext.createOscillator();
     gain = audioContext.createGain();
     gain.connect(audioContext.destination);
     gain.gain.value = 0;
     gain.gain.linearRampToValueAtTime(dbToGain(config.oscillatorVolume), audioContext.currentTime + 0.02);
+    oscillator = audioContext.createOscillator();
+    oscillator.type = config.oscillatorType;
     oscillator.connect(gain);
     updateOscillatorFreq(e.offsetX, e.offsetY);
     oscillator.start();
 });
 window.addEventListener("mouseup", e => {
-    if (oscillator != null) {
+    if (oscillator != null && e.button === 0) {
         oscillator.stop();
         oscillator = null;
     }
@@ -268,10 +292,13 @@ resizeCanvas();
     gui.add(config, "slope", 0.01, 1, 0.001).name("Slope");
     gui.add(config, "colorWheelOffset", 0, 1, 0.05).name("Color wheel offset");
     gui.add(config, "fftSize", 5, 15, 1).name("FFT size").onFinishChange(updateFFTSize);
-    gui.add(config, "lineDrawMode", ["None", "Notes", "Octaves"]).name("Line draw mode");
+    gui.add(config, "octaveDivision", 0, 53, 1).name("Octave division");
+    gui.add(config, "octaveFreq", 440 / Math.pow(2, 9 / 12), 1000, 0.01).name("Octave frequency");
     const oscillatorControls = gui.addFolder("Oscillator");
     oscillatorControls.open();
     oscillatorControls.add(config, "oscillatorVolume", -60, 0, 1).name("Oscillator volume");
+    oscillatorControls.add(config, "oscillatorType", ["sine", "square", "sawtooth", "triangle"]).name("Oscillator type");
+    oscillatorControls.add(config, "oscillatorSnap").name("Snap oscillator?");
     const controls = gui.addFolder("Controls");
     controls.open();
     pauseButton = controls.add(config, "pauseOrResume").name("Pause");
