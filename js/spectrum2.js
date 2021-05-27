@@ -21,13 +21,15 @@ let pauseButton;
 let config = {
     audioDevice: null,
     logarithmic: false,
-    minFreq: 55,
-    maxFreq: 2400,
-    exponent: 1.08,
+    minFreq: 65.3,
+    maxFreq: 2093,
+    minDb: -60,
+    exponent: 1.1,
     running: true,
     oscillatorVolume: -35,
-    fftSize: 13,
     colorWheelOffset: 0.25,
+    fftSize: 13,
+    lineDrawMode: "Notes",
     pauseOrResume: function () {
         this.running = !this.running;
         pauseButton.name(this.running ? "Pause" : "Resume");
@@ -48,6 +50,12 @@ function interpolate(min, max, t) {
     return (1 - t) * min + t * max;
 }
 
+function reverseInterpolate(min, max, value) {
+    if (config.logarithmic)
+        return (Math.log(value) - Math.log(min)) / (Math.log(max) - Math.log(min));
+    return (value - min) / (max - min);
+}
+
 function getColor(pitch, intensity) {
     intensity = Math.max(0, Math.min(1, intensity));
     var hue = (pitch + config.colorWheelOffset) % 1;
@@ -56,7 +64,7 @@ function getColor(pitch, intensity) {
 
 function getPitch(freq) {
     const pitch = Math.log2(freq / C0);
-    return { octave: Math.floor(pitch), pitch: pitch - Math.floor(pitch) };
+    return pitch - Math.floor(pitch);
 }
 
 function getMusicalPitch(freq) {
@@ -64,7 +72,7 @@ function getMusicalPitch(freq) {
     const totalCents = Math.log2(freq / C0) * 12;
     const pitchClass = (((totalCents + 0.5) % 12) + 12) % 12;
     const nearest = Math.floor(pitchClass);
-    return { name: names[nearest], octave: Math.floor((totalCents + 0.5) / 12), cents: (((totalCents + 0.5) % 12) - nearest) * 100 - 50 };
+    return { name: names[nearest], octave: Math.floor((totalCents + 0.5) / 12), cents: (pitchClass - nearest) * 100 - 50 };
 }
 
 async function setAudioDevice(deviceId) {
@@ -82,10 +90,6 @@ async function setAudioDevice(deviceId) {
 async function initMicrophoneList() {
     try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        source = audioContext.createMediaStreamSource(stream);
-        analyser = audioContext.createAnalyser();
-        analyser.smoothingTimeConstant = 0;
-        source.connect(analyser);
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         audioDevices = {};
@@ -94,7 +98,7 @@ async function initMicrophoneList() {
                 audioDevices[d.label] = d.deviceId;
                 if (d.label.indexOf("Stereo Mix") !== -1) {
                     config.audioDevice = d.deviceId;
-                    setAudioDevice(config.audioDevice);
+                    await setAudioDevice(config.audioDevice);
                 }
             }
         }
@@ -137,8 +141,11 @@ function render() {
             let freq = interpolate(config.minFreq, config.maxFreq, 1 - y / offCanvas.height);
             let bin = Math.round(freq / audioContext.sampleRate * 2 * analyser.frequencyBinCount);
             let v = freqData[bin];
+            if (v < config.minDb) {
+                v = config.minDb + 2 * (v - config.minDb);
+            }
             let vv = Math.pow(config.exponent, v + gain);
-            let color = getColor(getPitch(freq).pitch, vv).rgb();
+            let color = getColor(getPitch(freq), vv).rgb();
 
             imageData.data[i++] = color.r;
             imageData.data[i++] = color.g;
@@ -151,6 +158,22 @@ function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(offCanvas, 0, 0);
 
+    // Draw lines
+    if (config.lineDrawMode === "Notes" || config.lineDrawMode === "Octaves") {
+        let f = config.lineDrawMode === "Notes" ? 12 : 1;
+        const minPitch = Math.ceil(Math.log2(config.minFreq / C0) * f);
+        const maxPitch = Math.floor(Math.log2(config.maxFreq / C0) * f);
+        ctx.strokeStyle = "#777";
+        for (let i = minPitch; i <= maxPitch; i++) {
+            ctx.lineWidth = i % 12 === 0 ? 1.5 : 0.5;
+            let y = Math.round((1 - reverseInterpolate(config.minFreq, config.maxFreq, C0 * Math.pow(2, i / f))) * canvas.height);
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+    }
+
     // Draw frequency text
     let freq = interpolate(config.minFreq, config.maxFreq, 1 - lastY / canvas.height);
     let p = getMusicalPitch(freq);
@@ -159,7 +182,7 @@ function render() {
     window.metrics = metrics;
     let x = Math.min(lastX + 6, canvas.width - metrics.width);
     let y = Math.max(lastY - 12, metrics.fontBoundingBoxAscent);
-    let color = getColor(getPitch(freq).pitch, oscillator == null ? 0.5 : 1).toString();
+    let color = getColor(getPitch(freq), oscillator == null ? 0.5 : 1).toString();
     ctx.fillStyle = oscillator == null ? "#ccc" : color;
     ctx.font = "16px Open Sans";
     ctx.fillText(str, x, y);
@@ -184,13 +207,15 @@ canvas.addEventListener("mousedown", e => {
     updateOscillatorFreq(e.offsetX, e.offsetY);
     oscillator.start();
 });
-canvas.addEventListener("mouseup", e => {
-    oscillator.stop();
-    oscillator = null;
+window.addEventListener("mouseup", e => {
+    if (oscillator != null) {
+        oscillator.stop();
+        oscillator = null;
+    }
 });
 canvas.addEventListener("mousemove", e => {
     updateOscillatorFreq(e.offsetX, e.offsetY);
-})
+});
 
 resizeCanvas();
 
@@ -198,20 +223,26 @@ resizeCanvas();
     await initMicrophoneList();
 
     let gui = new dat.GUI({ name: "Hello", width: 300 });
-    gui.add(config, "audioDevice", audioDevices).name("Audio device").onFinishChange(() => {
-        setAudioDevice(config.audioDevice);
+    gui.domElement.id = "gui";
+    gui.add(config, "audioDevice", audioDevices).name("Audio device").onFinishChange(async () => {
+        await setAudioDevice(config.audioDevice);
     });
     gui.add(config, "logarithmic").name("Logarithmic scale?");
-    gui.add(config, "minFreq", 1, 22050, 1).name("Min frequency").listen().onFinishChange(() => {
+    const minFreqControl = gui.add(config, "minFreq", 1, 22050, 1);
+    const maxFreqControl = gui.add(config, "maxFreq", 2, 22050, 1);
+    minFreqControl.name("Min frequency").onFinishChange(() => {
         config.maxFreq = Math.max(config.minFreq, config.maxFreq);
+        maxFreqControl.updateDisplay();
     });
-    gui.add(config, "maxFreq", 2, 22050, 1).name("Max frequency").listen().onFinishChange(() => {
+    maxFreqControl.name("Max frequency").onFinishChange(() => {
         config.minFreq = Math.min(config.minFreq, config.maxFreq);
+        minFreqControl.updateDisplay();
     });
+    gui.add(config, "minDb", -100, 0).name("Minimum DB");
     gui.add(config, "exponent", 1, 3, 0.01).name("Exponent");
     gui.add(config, "colorWheelOffset", 0, 1, 0.05).name("Color wheel offset");
-    let fftSizeControl = gui.add(config, "fftSize", 5, 15, 1).name("FFT size");
-    fftSizeControl.onFinishChange(updateFFTSize);
+    gui.add(config, "fftSize", 5, 15, 1).name("FFT size").onFinishChange(updateFFTSize);
+    gui.add(config, "lineDrawMode", ["None", "Notes", "Octaves"]).name("Line draw mode");
     const oscillatorControls = gui.addFolder("Oscillator");
     oscillatorControls.open();
     oscillatorControls.add(config, "oscillatorVolume", -60, 0, 1).name("Oscillator volume");
