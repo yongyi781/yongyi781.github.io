@@ -21,11 +21,10 @@ let pauseButton;
 let config = {
     audioDevice: "",
     logarithmic: true,
-    minFreq: 65.3,
-    maxFreq: 2093,
+    minFreq: 60,
+    maxFreq: 2200,
     sampleRate: 8000,
-    minDb: -100,
-    slope: 0.07,
+    slope: 0.12,
     running: true,
     colorWheelOffset: 0.25,
     fftSize: 12,
@@ -91,6 +90,13 @@ function getMusicalPitch(freq) {
     const pitchClass = (((totalCents + 0.5) % 12) + 12) % 12;
     const nearest = Math.floor(pitchClass);
     return { name: names[nearest], octave: Math.floor((totalCents + 0.5) / 12), cents: (pitchClass - nearest) * 100 - 50 };
+}
+
+function getIntensity(data, x, gain) {
+    // Return weighted average of neighbors
+    var t = x - Math.floor(x);
+    var y = (1 - t) * data[Math.floor(x)] + t * data[Math.ceil(x)];
+    return Math.pow(2, config.slope * (y + gain));
 }
 
 function createAnalyser() {
@@ -205,12 +211,7 @@ function render() {
         // Make h x 1 image data from frequency data
         for (let y = 0, i = 0; y < canvas.height; y++) {
             let freq = yToFreq(y);
-            let bin = Math.round(freq / audioContext.sampleRate * 2 * analyser.frequencyBinCount);
-            let v = freqData[bin];
-            if (v < config.minDb) {
-                v = config.minDb + 2 * (v - config.minDb);
-            }
-            let vv = Math.exp(config.slope * (v + gain));
+            let vv = getIntensity(freqData, freq / audioContext.sampleRate * 2 * analyser.frequencyBinCount, gain)
             let color = getColor(getPitch(freq), vv).rgb();
 
             imageData.data[i++] = color.r;
@@ -299,8 +300,8 @@ resizeCanvas();
         await setAudioDevice(config.audioDevice);
     });
     gui.add(config, "logarithmic").name("Logarithmic scale?");
-    const minFreqControl = gui.add(config, "minFreq", 1, 22050, 1);
-    const maxFreqControl = gui.add(config, "maxFreq", 2, 22050, 1);
+    const minFreqControl = gui.add(config, "minFreq", 16, 22050, 1);
+    const maxFreqControl = gui.add(config, "maxFreq", 16, 22050, 1);
     const sampleRateControl = gui.add(config, "sampleRate", 3000, 48000, 1).name("Sample rate").onFinishChange(setSampleRate);
     minFreqControl.name("Min frequency").onFinishChange(() => {
         config.maxFreq = Math.max(config.minFreq, config.maxFreq);
@@ -314,7 +315,6 @@ resizeCanvas();
             sampleRateControl.updateDisplay();
         }
     });
-    gui.add(config, "minDb", -100, 0).name("Minimum DB");
     gui.add(config, "slope", 0.01, 1, 0.001).name("Slope");
     gui.add(config, "colorWheelOffset", 0, 1, 0.05).name("Color wheel offset");
     gui.add(config, "fftSize", 5, 15, 1).name("FFT size").onFinishChange(updateFFTSize);
