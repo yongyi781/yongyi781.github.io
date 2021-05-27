@@ -132,6 +132,7 @@ function resizeCanvas() {
     canvas.width = offCanvas.width = window.innerWidth;
     canvas.height = offCanvas.height = window.innerHeight;
     imageData = ctx.getImageData(0, 0, 1, canvas.height);
+    ctx.imageSmoothingEnabled = offCtx.imageSmoothingEnabled = false;
 }
 
 function updateFFTSize() {
@@ -154,7 +155,7 @@ function render() {
         const gain = Math.min(50, -maxDb);
 
         // Shift contents 1 pixel to the left
-        offCtx.drawImage(offCanvas, -1, 0);
+        offCtx.drawImage(offCanvas, 1, 0, offCanvas.width - 1, offCanvas.height, 0, 0, offCanvas.width - 1, offCanvas.height);
 
         // Make h x 1 image data from frequency data
         for (let y = 0, i = 0; y < canvas.height; y++) {
