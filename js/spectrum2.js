@@ -10,7 +10,6 @@ let analyser;
 let freqData;
 let imageData;
 let audioDevices;
-let audioContext = new AudioContext();
 /** @type GainNode */
 let gain;
 /** @type OscillatorNode */
@@ -23,12 +22,13 @@ let config = {
     logarithmic: false,
     minFreq: 65.3,
     maxFreq: 2093,
+    sampleRate: 8000,
     minDb: -100,
-    exponent: 1.05,
+    slope: 0.07,
     running: true,
     oscillatorVolume: -35,
     colorWheelOffset: 0.25,
-    fftSize: 13,
+    fftSize: 12,
     lineDrawMode: "Notes",
     pauseOrResume: function () {
         this.running = !this.running;
@@ -38,6 +38,7 @@ let config = {
         offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height);
     }
 }
+let audioContext = new AudioContext({ sampleRate: config.sampleRate });
 
 function dbToGain(db) {
     return Math.pow(10, db / 20);
@@ -75,16 +76,35 @@ function getMusicalPitch(freq) {
     return { name: names[nearest], octave: Math.floor((totalCents + 0.5) / 12), cents: (pitchClass - nearest) * 100 - 50 };
 }
 
+function createAnalyser() {
+    if (source !== null) {
+        source.disconnect();
+    }
+    analyser = audioContext.createAnalyser();
+    analyser.smoothingTimeConstant = 0;
+    updateFFTSize();
+    source.connect(analyser);
+}
+
+async function setSampleRate(sampleRate) {
+    if (config.sampleRate !== sampleRate) {
+        config.sampleRate = sampleRate;
+    }
+    if (audioContext !== null) {
+        await audioContext.close();
+    }
+    audioContext = new AudioContext({ sampleRate });
+    source = audioContext.createMediaStreamSource(stream);
+    createAnalyser();
+}
+
 async function setAudioDevice(deviceId) {
-    if (analyser != null) {
-        source.disconnect(analyser);
+    if (source != null) {
+        source.disconnect();
     }
     stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId } });
     source = audioContext.createMediaStreamSource(stream);
-    analyser = audioContext.createAnalyser();
-    analyser.smoothingTimeConstant = 0;
-    source.connect(analyser);
-    updateFFTSize();
+    createAnalyser();
 }
 
 async function initMicrophoneList() {
@@ -144,7 +164,7 @@ function render() {
             if (v < config.minDb) {
                 v = config.minDb + 2 * (v - config.minDb);
             }
-            let vv = Math.pow(config.exponent, v + gain);
+            let vv = Math.exp(config.slope * (v + gain));
             let color = getColor(getPitch(freq), vv).rgb();
 
             imageData.data[i++] = color.r;
@@ -163,9 +183,9 @@ function render() {
         let f = config.lineDrawMode === "Notes" ? 12 : 1;
         const minPitch = Math.ceil(Math.log2(config.minFreq / C0) * f);
         const maxPitch = Math.floor(Math.log2(config.maxFreq / C0) * f);
-        ctx.strokeStyle = "#777";
+        ctx.strokeStyle = "#888";
         for (let i = minPitch; i <= maxPitch; i++) {
-            ctx.lineWidth = i % 12 === 0 ? 1.5 : 0.5;
+            ctx.lineWidth = i % f === 0 ? 1.5 : 0.5;
             let y = Math.round((1 - reverseInterpolate(config.minFreq, config.maxFreq, C0 * Math.pow(2, i / f))) * canvas.height);
             ctx.beginPath();
             ctx.moveTo(0, y);
@@ -230,6 +250,7 @@ resizeCanvas();
     gui.add(config, "logarithmic").name("Logarithmic scale?");
     const minFreqControl = gui.add(config, "minFreq", 1, 22050, 1);
     const maxFreqControl = gui.add(config, "maxFreq", 2, 22050, 1);
+    const sampleRateControl = gui.add(config, "sampleRate", 3000, 44100, 1).name("Sample rate").onFinishChange(setSampleRate);
     minFreqControl.name("Min frequency").onFinishChange(() => {
         config.maxFreq = Math.max(config.minFreq, config.maxFreq);
         maxFreqControl.updateDisplay();
@@ -237,9 +258,13 @@ resizeCanvas();
     maxFreqControl.name("Max frequency").onFinishChange(() => {
         config.minFreq = Math.min(config.minFreq, config.maxFreq);
         minFreqControl.updateDisplay();
+        if (config.sampleRate < 2 * config.maxFreq) {
+            setSampleRate(2 * config.maxFreq);
+            sampleRateControl.updateDisplay();
+        }
     });
     gui.add(config, "minDb", -100, 0).name("Minimum DB");
-    gui.add(config, "exponent", 1, 3, 0.01).name("Exponent");
+    gui.add(config, "slope", 0.01, 1, 0.001).name("Slope");
     gui.add(config, "colorWheelOffset", 0, 1, 0.05).name("Color wheel offset");
     gui.add(config, "fftSize", 5, 15, 1).name("FFT size").onFinishChange(updateFFTSize);
     gui.add(config, "lineDrawMode", ["None", "Notes", "Octaves"]).name("Line draw mode");
