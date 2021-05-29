@@ -27,12 +27,12 @@ let config = {
     slope: 0.12,
     running: true,
     colorWheelOffset: 0.25,
-    fftSize: 12,
+    fftSize: 11,
     octaveDivision: 12,
     octaveFreq: 440 / Math.pow(2, 9 / 12),
     oscillatorVolume: -35,
     oscillatorType: "sine",
-    oscillatorSnap: false,
+    oscillatorSnap: true,
     pauseOrResume: function () {
         this.running = !this.running;
         pauseButton.name(this.running ? "Pause" : "Resume");
@@ -94,8 +94,8 @@ function getMusicalPitch(freq) {
 
 function getIntensity(data, x, gain) {
     // Return weighted average of neighbors
-    var t = x - Math.floor(x);
-    var y = (1 - t) * data[Math.floor(x)] + t * data[Math.ceil(x)];
+    const t = x - Math.floor(x);
+    const y = (1 - t) * data[Math.floor(x)] + t * data[Math.ceil(x)];
     return Math.pow(2, config.slope * (y + gain));
 }
 
@@ -300,8 +300,8 @@ resizeCanvas();
         await setAudioDevice(config.audioDevice);
     });
     gui.add(config, "logarithmic").name("Logarithmic scale?");
-    const minFreqControl = gui.add(config, "minFreq", 16, 22050, 1);
-    const maxFreqControl = gui.add(config, "maxFreq", 16, 22050, 1);
+    const minFreqControl = gui.add(config, "minFreq", 16, 24000, 1);
+    const maxFreqControl = gui.add(config, "maxFreq", 16, 24000, 1);
     const sampleRateControl = gui.add(config, "sampleRate", 3000, 48000, 1).name("Sample rate").onFinishChange(setSampleRate);
     minFreqControl.name("Min frequency").onFinishChange(() => {
         config.maxFreq = Math.max(config.minFreq, config.maxFreq);
