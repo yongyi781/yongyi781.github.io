@@ -4,8 +4,9 @@
 <head>
     <title>Random Sentences</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     <style>
         #sentence {
             font-size: 18px;
@@ -17,12 +18,33 @@
 <body>
     <div class="container">
         <h1>Random Sentences (words weighted by frequency)</h1>
-        <div class="form-group form-inline">
-            <label for="pattern">Pattern:</label> <input type="text" id="pattern" class="form-control"
-                value="a j n vp a n t v a n" />
-            <button id="generate" class="btn btn-primary" disabled>Loading words...</button>
+        <div class="row g-3">
+            <div class="col-2">
+                <label for="pattern" class="col-form-label">Pattern:</label>
+            </div>
+            <div class="col-auto">
+                <input type="text" id="pattern" class="form-control" value="a j n vp a n and vp a n" />
+            </div>
+            <div class="col-auto">
+                <button id="generate" class="btn btn-primary col-auto" disabled>Loading
+                    words...</button>
+            </div>
+            <div class="col-auto">
+                <div class="col-auto">
+                    <button id="speak" class="btn btn-primary" disabled>Speak</button>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3" id="speakDiv" hidden>
+            <div class="col-2">
+                <label for="pattern" class="col-form-label">Voice:</label>
+            </div>
+            <div class="col-auto">
+                <select class="form-select" id="voices"></select>
+            </div>
         </div>
         <div id="sentence"></div>
+        <hr>
         <div>
             <h3>Pattern Help</h3>
             <ul id="help"></ul>
@@ -31,18 +53,19 @@
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"
         integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <script>
-        var words = {};
+        let words = {};
+        let voices;
 
         function readCsv(allText) {
-            var allTextLines = allText.split(/\r\n|\n/);
-            var headers = allTextLines[0].split(',');
-            var lines = [];
+            let allTextLines = allText.split(/\r\n|\n/);
+            let headers = allTextLines[0].split(',');
+            let lines = [];
 
-            for (var i = 1; i < allTextLines.length; i++) {
-                var data = allTextLines[i].split(',');
+            for (let i = 1; i < allTextLines.length; i++) {
+                let data = allTextLines[i].split(',');
                 if (data.length == headers.length) {
-                    var tarr = {};
-                    for (var j = 0; j < headers.length; j++) {
+                    let tarr = {};
+                    for (let j = 0; j < headers.length; j++) {
                         tarr[headers[j]] = isNaN(data[j]) ? data[j] : +data[j];
                     }
                     lines.push(tarr);
@@ -53,9 +76,9 @@
         }
 
         function chooseRandom(arr) {
-            var total = arr.reduce(function (prev, curr) { return prev + curr.Frequency; }, 0);
-            var num = Math.floor(Math.random() * total);
-            for (var i = 0; i < arr.length; i++) {
+            let total = arr.reduce(function (prev, curr) { return prev + curr.Frequency; }, 0);
+            let num = Math.floor(Math.random() * total);
+            for (let i = 0; i < arr.length; i++) {
                 num -= arr[i].Frequency;
                 if (num <= 0) {
                     return arr[i];
@@ -67,7 +90,7 @@
         // grammatically predictable rules
         // From https://gist.github.com/letsgetrandy/1e05a68ea74ba6736eb5
         function getPastTense(verb) {
-            var exceptions = {
+            let exceptions = {
                 "are": "were",
                 "be": "was",
                 "bring": "brought",
@@ -87,7 +110,16 @@
                 "sing": "sang",
                 "take": "took",
                 "visit": "visited",
-            }
+                "think": "thought",
+                "begin": "began",
+                "catch": "caught",
+                "meet": "met",
+                "give": "gave",
+                "make": "made",
+                "feel": "felt",
+                "keep": "kept",
+                "let": "let"
+            };
 
             if (exceptions[verb]) {
                 return exceptions[verb];
@@ -113,17 +145,17 @@
 
         function populateHelp() {
             $("#help").empty();
-            for (var p in words) {
-                var text = "<strong>" + p + "</strong>" + " (" + words[p].length + "): ";
-                var examples = words[p].slice(0, 5).map(function (w) { return w.Word; }).join(", ");
+            for (let p in words) {
+                let text = "<strong>" + p + "</strong>" + " (" + words[p].length + "): ";
+                let examples = words[p].slice(0, 5).map(function (w) { return w.Word; }).join(", ");
                 $("#help").append($("<li/>").html(text + examples));
             }
             $("#help").append("<li><strong>vp</strong>: Past tense verbs</li>");
         }
 
-        $("#generate").click(function (e) {
-            var ss = $("#pattern").val().split(" ");
-            var choices = ss.map(function (p) {
+        $("#generate").click(() => {
+            let ss = $("#pattern").val().split(" ");
+            let choices = ss.map(function (p) {
                 if (p === "vp" && "v" in words) {
                     return getPastTense(chooseRandom(words[p[0]]).Word);
                 }
@@ -132,26 +164,47 @@
                 }
                 return chooseRandom(words[p]).Word;
             });
-            for (var i = 0; i < choices.length - 1; i++) {
+            for (let i = 0; i < choices.length - 1; i++) {
                 if (choices[i] === "a" && "aeiouAEIOU".indexOf(choices[i + 1][0]) !== -1) {
                     choices[i] = "an";
                 }
             }
-            var sentence = choices.join(" ") + ".";
+            let sentence = choices.join(" ") + ".";
             sentence = sentence[0].toUpperCase() + sentence.substring(1);
             $("#sentence").text(sentence);
+            $("#speak").removeAttr("disabled");
+            $("#speakDiv").removeAttr("hidden");
         });
 
-        $("#pattern").keypress(function (e) {
+        $("#pattern").keypress(e => {
             if (e.key === "Enter") {
                 e.preventDefault();
                 $("#generate").click();
             }
         });
 
+        $("#speak").click(() => {
+            let u = new SpeechSynthesisUtterance($("#sentence").text());
+            u.voice = voices[$("#voices").val()];
+            u.volume = 0.2;
+            speechSynthesis.cancel();
+            speechSynthesis.speak(u);
+        });
+
+        speechSynthesis.addEventListener("voiceschanged", () => {
+            $("#voices").children().remove();
+            voices = speechSynthesis.getVoices();
+            voices.forEach((voice, i) => {
+                if (voice.lang === "en-US") {
+                    $("#voices").append($("<option>").text(voice.name).val(i));
+                }
+            });
+            $("#voices").val(voices.findIndex(v => v.lang === "en-US" && v.name.includes("Guy")));
+        });
+
         $.get("words.csv", function (data) {
             readCsv(data).forEach(function (item) {
-                var pos = item["Part of speech"];
+                let pos = item["Part of speech"];
                 if (words[pos] == null) {
                     words[pos] = [];
                 }
