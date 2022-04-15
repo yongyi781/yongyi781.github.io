@@ -197,7 +197,7 @@
             $("#voices").children().remove();
             voices = speechSynthesis.getVoices();
             voices.forEach((voice, i) => {
-                if (voice.lang === "en-US") {
+                if (true) {
                     $("#voices").append($("<option>").text(voice.name).val(i));
                 }
             });
