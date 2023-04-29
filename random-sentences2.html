@@ -194,14 +194,15 @@
         });
 
         speechSynthesis.addEventListener("voiceschanged", () => {
-            $("#voices").children().remove();
-            voices = speechSynthesis.getVoices();
-            voices.forEach((voice, i) => {
-                if (true) {
-                    $("#voices").append($("<option>").text(voice.name).val(i));
-                }
-            });
-            $("#voices").val(voices.findIndex(v => v.lang === "en-US" && v.name.includes("Guy")));
+            if ($("#voices").children().length == 0) {
+                voices = speechSynthesis.getVoices();
+                voices.forEach((voice, i) => {
+                    if (true) {
+                        $("#voices").append($("<option>").text(voice.name).val(i));
+                    }
+                });
+                $("#voices").val(voices.findIndex(v => v.lang === "en-US" && v.name.includes("Guy")));
+            }
         });
 
         $.get("words.csv", function (data) {

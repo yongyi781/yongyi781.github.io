@@ -149,13 +149,22 @@ async function setAudioDevice(deviceId) {
     if (source != null) {
         source.disconnect();
     }
-    stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId } });
+    stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+            deviceId,
+            echoCancellation: false,
+            autoGainControl: false,
+            noiseSuppression: false
+        }
+    });
     await createAudioContext();
 }
 
 async function initMicrophoneList() {
     try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+            audio: true
+        });
 
         const devices = await navigator.mediaDevices.enumerateDevices();
         audioDevices = {};
