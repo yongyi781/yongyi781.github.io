@@ -2,97 +2,116 @@
 <html>
 
 <head>
-    <!-- Copyright (c) 2012-2019 The MathJax Consortium -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>MathJax Live Preview</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <style>
-        #input {
-            border: 1px solid grey;
-            margin: 0 0 .25em;
-            width: 100%;
-            box-sizing: border-box;
-        }
+  <!-- Copyright (c) 2012-2019 The MathJax Consortium -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>MathJax Live Preview</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-        #output {
-            margin-top: .75em;
-            border: 1px solid grey;
-            padding: .25em;
-            min-height: 2em;
-            white-space: pre-wrap;
-        }
-    </style>
+    body {
+      font-family: system-ui, 'Noto Sans', sans-serif;
+    }
+
+    textarea {
+      font-family: 'Cascadia Code', 'Fira Mono', Consolas, monospace;
+      border-radius: 5px;
+      padding: 0.5em;
+      border: 1px solid grey;
+      margin: 1em 0 0 0;
+      width: 100%;
+    }
+
+    .container {
+      margin: 0 auto;
+      max-width: 768px;
+    }
+
+    #output {
+      margin-top: .75em;
+      border: 1px solid grey;
+      border-radius: 5px;
+      padding: .5em;
+      min-height: 2em;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+  </style>
 </head>
 
 <body>
+  <div class="container">
+    <h1>MathJax Live Preview</h1>
+    <a href="./katex.html">Switch to KaTeX</a>
+    <textarea class="form-control" id="input" rows="15"></textarea>
+    <div id="output"></div>
+  </div>
 
-    <div class="container">
+  <script>
+    let urlParams = new URLSearchParams(window.location.search);
+    let mathbotStyleStr = urlParams.get("mathbot");
+    let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1";
 
-        <h1>MathJax Live Preview</h1>
-        <textarea class="form-control" id="input" rows="15"></textarea>
-        <div id="output"></div>
-    </div>
+    inlineChar = mathbotStyle ? "$$" : "$";
+    displayMath = [["\\[", "\\]"]];
+    if (!mathbotStyle) {
+      displayMath.push(["$$", "$$"]);
+    }
 
-    <script>
-        let urlParams = new URLSearchParams(window.location.search);
-        let mathbotStyleStr = urlParams.get("mathbot");
-        let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1";
+    let macros = {};
 
-        inlineChar = mathbotStyle ? "$$" : "$";
-        displayMath = [["\\[", "\\]"]];
-        if (!mathbotStyle) {
-            displayMath.push(["$$", "$$"]);
-        }
+    let lowercase = "abcdefghijklmnopqrstuvwxyz";
+    let uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let c of uppercase) {
+      macros["b" + c] = "\\mathbb{" + c + "}";
+      macros["c" + c] = "\\mathcal{" + c + "}";
+    }
+    for (let c of lowercase + uppercase) {
+      macros["f" + c] = "\\mathfrak{" + c + "}";
+    }
 
-        let macros = {};
+    MathJax = {
+      tex: {
+        inlineMath: [[inlineChar, inlineChar], ['\\(', '\\)']],
+        displayMath,
+        tags: "ams",
+        macros
+      }
+    };
+  </script>
+  <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script>
+    var isTypesetting = false;
+    var defaultText = "Let $$x$$ be a solution to $$ax^2+bx+c=0$$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]";
 
-        for (let i = 0; i < 26; i++) {
-            let c = String.fromCharCode(65 + i);
-            macros["bb" + c] = "\\mathbb{" + c + "}";
-        }
+    function convert() {
+      let input = document.querySelector("#input").value.trim();
+      localStorage.setItem("content", input);
 
-        MathJax = {
-            tex: {
-                inlineMath: [[inlineChar, inlineChar], ['\\(', '\\)']],
-                displayMath,
-                tags: "ams",
-                macros
-            }
-        };
-    </script>
-    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>
-        var isTypesetting = false;
-        var defaultText = "Let $$x$$ be a solution to $$ax^2+bx+c=0$$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]";
+      if (isTypesetting) {
+        return;
+      }
+      let output = document.querySelector("#output");
+      output.textContent = input;
 
-        function convert() {
-            let input = document.querySelector("#input").value.trim();
-            localStorage.setItem("content", input);
+      MathJax.texReset();
+      MathJax.typesetClear();
+      isTypesetting = true;
+      MathJax.typesetPromise([output]).catch(err => {
+        console.error(err);
+      }).then(() => {
+        isTypesetting = false;
+      });
+    }
 
-            if (isTypesetting) {
-                return;
-            }
-            let output = document.querySelector("#output");
-            output.textContent = input;
+    document.querySelector("#input").addEventListener("keyup", convert);
 
-            MathJax.texReset();
-            MathJax.typesetClear();
-            isTypesetting = true;
-            MathJax.typesetPromise([output]).catch(err => {
-                console.error(err);
-            }).then(() => {
-                isTypesetting = false;
-            });
-        }
-
-        document.querySelector("#input").addEventListener("keyup", convert);
-
-        document.querySelector("#input").value = localStorage.getItem("content") || defaultText;
-        convert();
-    </script>
+    document.querySelector("#input").value = localStorage.getItem("content") || defaultText;
+    convert();
+  </script>
 </body>
 
 </html>
