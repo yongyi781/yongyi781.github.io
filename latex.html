@@ -71,6 +71,7 @@
     }
     for (let c of lowercase + uppercase) {
       macros["f" + c] = "\\mathfrak{" + c + "}";
+      macros["s" + c] = "\\mathscr{" + c + "}";
     }
 
     MathJax = {

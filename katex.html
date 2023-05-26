@@ -83,6 +83,7 @@
     }
     for (let c of lowercase + uppercase) {
       macros["\\f" + c] = "\\mathfrak{" + c + "}";
+      macros["\\s" + c] = "\\mathscr{" + c + "}";
     }
 
     var defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]";
