@@ -46,6 +46,8 @@
         <p>
             Left-click to imbue, right-click to force. When you click Solve, the tiles marked 1 are the tiles to imbue.
         </p>
+        <p>The average layout (solvable or unsolvable) takes <span id="average1"></span> actions to solve.</p>
+        <p>The average solvable layout takes <span id="average2"></span> actions to solve.</p>
         <div class="center">
             <div class="inline-block">
                 <button class="btn btn-success" id="solve">Solve</button>
@@ -56,6 +58,7 @@
                 </table>
                 <input type="number" class="form-control" name="code" id="code" aria-describedby="helpId"
                     placeholder="Code">
+                <p>This layout takes <span id="score">0</span> flip/force actions to solve.</p>
             </div>
         </div>
     </div>
@@ -75,6 +78,16 @@
 
         // All the vectors in the nullspace of the Lights Out matrix, or that flip all the tiles.
         let nullOrFlipAllVectors = [[[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], [[1, 0, 1, 0, 1], [1, 0, 1, 0, 1], [0, 0, 0, 0, 0], [1, 0, 1, 0, 1], [1, 0, 1, 0, 1]], [[0, 1, 1, 1, 0], [1, 0, 1, 0, 1], [1, 1, 0, 1, 1], [1, 0, 1, 0, 1], [0, 1, 1, 1, 0]], [[1, 1, 0, 1, 1], [0, 0, 0, 0, 0], [1, 1, 0, 1, 1], [0, 0, 0, 0, 0], [1, 1, 0, 1, 1]], [[0, 1, 1, 0, 1], [0, 1, 1, 1, 0], [0, 0, 1, 1, 1], [1, 1, 0, 1, 1], [1, 1, 0, 0, 0]], [[1, 1, 0, 0, 0], [1, 1, 0, 1, 1], [0, 0, 1, 1, 1], [0, 1, 1, 1, 0], [0, 1, 1, 0, 1]], [[0, 0, 0, 1, 1], [1, 1, 0, 1, 1], [1, 1, 1, 0, 0], [0, 1, 1, 1, 0], [1, 0, 1, 1, 0]], [[1, 0, 1, 1, 0], [0, 1, 1, 1, 0], [1, 1, 1, 0, 0], [1, 1, 0, 1, 1], [0, 0, 0, 1, 1]]];
+
+        let scores;
+
+        function average(arr) {
+            return arr.reduce((a, b) => a + b, 0) / arr.length;
+        }
+
+        function averageSolvable(arr) {
+            return average(arr.filter((x, i) => isSolvable(codeToVector(i))));
+        }
 
         function init() {
             for (let y = N - 1; y >= 0; y--) {
@@ -106,7 +119,6 @@
 
         function flip(x, y) {
             set(x, y, !vector[y][x]);
-            $("#code").val(getCode());
         }
 
         function touch(x, y, mark = true) {
@@ -189,6 +201,9 @@
             let solvable = isSolvable(vector);
             $("#solve, #unsolve").prop("disabled", !solvable);
             $("#solve").text(solvable ? "Solve" : "Unsolvable");
+            let code = getCode();
+            $("#code").val(code);
+            $("#score").text(scores[code]);
         }
 
         function reset() {
@@ -199,7 +214,6 @@
                 }
             }
             updateSolvable();
-            $("#code").val(getCode());
         }
 
         function getCode() {
@@ -219,6 +233,17 @@
                     set(x, y, code & (1 << ((N * y) + x)));
                 }
             }
+        }
+
+        function codeToVector(code) {
+            let result = [];
+            for (let y = 0; y < N; y++) {
+                result[y] = [];
+                for (let x = 0; x < N; x++) {
+                    result[y][x] = code & (1 << ((N * y) + x));
+                }
+            }
+            return result;
         }
 
         init();
@@ -283,6 +308,14 @@
             let code = $("#code").val() & ((1 << (N * N)) - 1);
             $("#code").val(code);
             setCode(code);
+        });
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const response = await fetch("data/scores.bin");
+            scores = new Uint8Array(await response.arrayBuffer());
+            console.log(average(scores));
+            $("#average1").text(Math.round(1e7 * average(scores)) / 1e7);
+            // $("#average2").text(Math.round(1e7 * averageSolvable(scores)) / 1e7);
         });
     </script>
 </body>
