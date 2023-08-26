@@ -219,9 +219,10 @@
         $("#frequency button").click(function () {
             var currentFreq = +$("#frequencyInput").val();
             var newFreq = currentFreq * Math.pow(2, +$(this).data("semitones") / 12);
-            if (synth != null)
+            if (synth != null) {
                 synth.frequency.value = newFreq;
-            $("#frequencyInput").val(newFreq);
+                synth.oscillator.harmonicity.value = $("#modFreqSlider").val() / newFreq;
+            } $("#frequencyInput").val(newFreq);
             updateFrequencySlider();
         });
 
