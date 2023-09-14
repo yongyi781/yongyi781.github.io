@@ -68,10 +68,10 @@ function freqToY(freq) {
     return (1 - reverseInterpolate(config.minFreq, config.maxFreq, freq)) * canvas.height;
 }
 
-function getColor(pitch, intensity) {
+function getColor(pitch, intensity, alpha = 1) {
     intensity = Math.max(0, Math.min(1, intensity));
     var hue = (pitch + config.colorWheelOffset) % 1;
-    return d3.cubehelix(360 * hue, 1, 0.65 * intensity);
+    return d3.cubehelix(360 * hue, 1, 0.65 * intensity, alpha);
 }
 
 // Returns 0-1, 0 corresponds to C.
@@ -240,7 +240,7 @@ function render() {
         const maxPitch = Math.floor(Math.log2(config.maxFreq / config.octaveFreq) * config.octaveDivision);
         ctx.lineWidth = 1;
         for (let i = minPitch; i <= maxPitch; i++) {
-            ctx.strokeStyle = i % config.octaveDivision === 0 ? "#ffffff66" : "#ffffff22";
+            ctx.strokeStyle = i % config.octaveDivision === 0 ? getColor(i / config.octaveDivision, 1, 1) : getColor(i / config.octaveDivision, 1, 0.4);
             let y = Math.round(freqToY(config.octaveFreq * Math.pow(2, i / config.octaveDivision))) + 0.5;
             ctx.beginPath();
             ctx.moveTo(0, y);
