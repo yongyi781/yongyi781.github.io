@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8" />
+	<link rel="icon" href="./favicon.png" />
+	<meta name="viewport" content="width=device-width" />
+	<link id="latestKatex" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+	
+		<link href="./_app/immutable/assets/0.1b56540b.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/index.9d0df2fc.css" rel="stylesheet">
+		<link rel="modulepreload" href="./_app/immutable/entry/start.091ca969.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/scheduler.668a7a52.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/singletons.130d23d8.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.5e79eba9.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/parse.bee59afc.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.a2c75490.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.040105a2.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/0.061d7954.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/stores.d42eba0e.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/stores.aeb9f053.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/svelte-logo.ec681887.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/4.8483543a.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/each.e59479a4.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.27d4979e.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/utils.c7d4d160.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/modularForms.28abc55f.js"><title>Automorphic Forms</title><!-- HEAD_svelte-1nb3y7k_START --><script id="csinit" type="text/x-cindyscript" data-svelte-h="svelte-l18off">hslToRgb(h, s, l) := (
+      regional(hh,c,x,m);
+      l = min(0.999,max(0,l));
+      hh = min(360,max(0,h * 180 / pi));
+      c = (1 - |2*l - 1|) * s;
+      x = c * (1 - abs(mod(hh / 60, 2) - 1));
+      m = l - c / 2;
+      (m, m, m) + if(hh < 60, (c, x, 0), if(hh < 120, (x, c, 0), if(hh<180, (0, c, x), if (hh<240, (0, x, c), if(hh < 300, (x, 0, c), (c, 0, x))))));
+    );
+    eta(tau) := (regional(res); res = 0; repeat(numTerms, (
+      regional(a,b);
+      a = floor(# / 2);
+      b = -1 + 3*mod(#,4) - mod(#,2) + 12*floor(# / 4);
+      res = res + (-1)^(floor(#/2)) * exp(b^2*pi*i*tau/12);
+    )); res);
+    theta1(tau) := 0;
+    theta2(tau) := (regional(res); res = 0; repeat(numTerms, res = res + 2*exp((#-1/2)^2*pi*i*tau)); res);
+    theta3(tau) := (regional(res); res = 1; repeat(numTerms - 1, res = res + 2*exp(#^2*pi*i*tau)); res);
+    theta4(tau) := (regional(res); res = 1; repeat(numTerms - 1, res = res + (-1)^#*2*exp(#^2*pi*i*tau)); res);
+    theta(tau) := theta3(tau);
+    E2(tau) := (regional(res); res = -1/24; repeat(numTerms - 1, res = res + #*exp(2*#*pi*i*tau)/(1-exp(2*#*pi*i*tau))); res);
+    E2nonhol(tau) := E2(tau) + 1/(8*pi*im(tau));
+    E4(tau) := 1/480*(theta2(tau)^8 + theta3(tau)^8 + theta4(tau)^8);
+    E6(tau) := -1/504 * (((theta2(2*tau))^4)^3-33*(((theta2(2*tau))^4)+((theta3(2*tau))^4))*((theta2(2*tau))^4)*((theta3(2*tau))^4)+((theta3(2*tau))^4)^3);
+    E8(tau) := 1/960*(theta2(tau)^16 + theta3(tau)^16 + theta4(tau)^16);
+    fromCoeffs(tau) := (regional(res); res = 0; repeat(min(numTerms,length(coeffs)), res = res + coeffs_(#) * exp(2*(#-1)*pi*i*tau)); res);
+    fromScreen(z) := if(upperHalfPlane, z + halfPlaneOffset*i, i * (1 + z/diskScale) / (1 - z/diskScale));
+    // Works for larger numbers than abs(...).
+    realAbs(x) := if(x<0,-x,x);
+    realToTex(r) := (
+      regional(s, ie, iplus);
+      s = guess(r);
+      ie = indexof(s, "e");
+      iplus = if(s_(ie+1)=="+",ie+1,ie);
+      if(isundefined(s),"\tilde{\infty}",
+      if(ie>0,substring(s,0,ie-1)+"\cdot 10^{"+substring(s,iplus,length(s))+"}",s))
+    );
+    complexToTex(z) := (
+      regional(realStr,imStr,imPlus);
+      realStr = realToTex(re(z));
+      imStr = realToTex(realAbs(im(z)));
+      imPlus = if(or(realStr=="0",realStr=="-0"),"","+");
+      if(and(and(or(realStr=="0",realStr=="-0"),imStr!="0"),imStr!="-0"),"",realStr) + if(or(imStr=="0",imStr=="-0"),"",if(im(z)>0,imPlus,"-") + if(imStr=="1","",imStr + " ") + "i")
+    );
+
+    f(tau) := tau;
+    f3(g) := (
+      regional(tau,a,b,c,d);
+      a = g_1_1;
+      b = g_1_2;
+      c = g_2_1;
+      d = g_2_2;
+      tau = (a*i + b) / (c*i + d);
+      det(g)^(weight/2) * (c*i+d)^(-weight) * i^(rot*weight*if(transform,1,0)) * f(tau);
+    );
+    f2(tau) := (
+      regional(s, nn, aa, kk);
+      s = re(sqrt(im(tau)));
+      nn = [[1, re(tau)], [0, 1]];
+      aa = [[s, 0], [0, 1/s]];
+      kk = [[K.x, -K.y], [K.y, K.x]];
+      if(transform,f3(mat*nn*aa*kk),f3(nn*aa*kk))
+    );
+    resetclock();
+    scale = 15;
+    transform = false;
+    upperHalfPlane = false;
+    halfPlaneOffset = 2;
+    brightnessScale = 7;
+    diskScale = 2.8;
+    weight = 0;
+    level = 1;
+    mat = [[0,-1],[1,0]];
+    rot = 0;
+    numTerms = 15;
+    coeffs = [1];
+  </script><script id="csdraw" type="text/x-cindyscript" data-svelte-h="svelte-x4x7hq">colorplot((
+      regional(tau, result);
+      tau = fromScreen(z);
+      if(im(tau)<0,grey(0.1),
+        result = f2(tau);
+        h = mod(im(log(result)) + 2 * pi, 2 * pi);
+        l = 1 / (1 + exp(-re(log(result)) / brightnessScale));
+        hslToRgb(h, 0.8, l);
+      ))
+    );
+    if(upperHalfPlane, (
+      apply(-5..5, drawText((#,-halfPlaneOffset - 0.2), #, color->grey(0.9), size->12, align->"mid", family->"Segoe UI"));
+      ), (
+      apply(-5..5, (
+        drawText((diskScale + 0.1) * (re((# - i) / (# + i)), im((# - i) / (# + i))), #, color->grey(0.9), size->12, align->"mid", family->"Segoe UI")
+      ));
+      drawText((diskScale + 0.1) * (1,0), "$\infty$", color->grey(0.9), size->12, align->"mid", family->"Segoe UI");
+    ));
+    tauMouse = fromScreen(complex(mouse()));
+    textLoc = screenbounds()_4_[1,2];
+    textLoc2 = screenbounds()_3_[1,2];
+    if(im(tauMouse)>=0,(
+      drawText(textLoc + (0.1,0.4), "$\tau="+complexToTex(tauMouse),color->grey(0.7), size->18);
+      drawText(textLoc + (0.1,0.1), "$f(\tau)=" + complexToTex(f2(tauMouse)), color->grey(0.7), size->18)
+    ));
+    drawText(textLoc2 + (-0.1,0.1), "$f(\infty i)=" + complexToTex(f2(100*i)/10^weight), color->grey(0.7), size->18, align->"right");</script><!-- HEAD_svelte-1nb3y7k_END --><!-- HEAD_svelte-1nb3y7k_START --><script id="csinit" type="text/x-cindyscript" data-svelte-h="svelte-l18off">hslToRgb(h, s, l) := (
+      regional(hh,c,x,m);
+      l = min(0.999,max(0,l));
+      hh = min(360,max(0,h * 180 / pi));
+      c = (1 - |2*l - 1|) * s;
+      x = c * (1 - abs(mod(hh / 60, 2) - 1));
+      m = l - c / 2;
+      (m, m, m) + if(hh < 60, (c, x, 0), if(hh < 120, (x, c, 0), if(hh<180, (0, c, x), if (hh<240, (0, x, c), if(hh < 300, (x, 0, c), (c, 0, x))))));
+    );
+    eta(tau) := (regional(res); res = 0; repeat(numTerms, (
+      regional(a,b);
+      a = floor(# / 2);
+      b = -1 + 3*mod(#,4) - mod(#,2) + 12*floor(# / 4);
+      res = res + (-1)^(floor(#/2)) * exp(b^2*pi*i*tau/12);
+    )); res);
+    theta1(tau) := 0;
+    theta2(tau) := (regional(res); res = 0; repeat(numTerms, res = res + 2*exp((#-1/2)^2*pi*i*tau)); res);
+    theta3(tau) := (regional(res); res = 1; repeat(numTerms - 1, res = res + 2*exp(#^2*pi*i*tau)); res);
+    theta4(tau) := (regional(res); res = 1; repeat(numTerms - 1, res = res + (-1)^#*2*exp(#^2*pi*i*tau)); res);
+    theta(tau) := theta3(tau);
+    E2(tau) := (regional(res); res = -1/24; repeat(numTerms - 1, res = res + #*exp(2*#*pi*i*tau)/(1-exp(2*#*pi*i*tau))); res);
+    E2nonhol(tau) := E2(tau) + 1/(8*pi*im(tau));
+    E4(tau) := 1/480*(theta2(tau)^8 + theta3(tau)^8 + theta4(tau)^8);
+    E6(tau) := -1/504 * (((theta2(2*tau))^4)^3-33*(((theta2(2*tau))^4)+((theta3(2*tau))^4))*((theta2(2*tau))^4)*((theta3(2*tau))^4)+((theta3(2*tau))^4)^3);
+    E8(tau) := 1/960*(theta2(tau)^16 + theta3(tau)^16 + theta4(tau)^16);
+    fromCoeffs(tau) := (regional(res); res = 0; repeat(min(numTerms,length(coeffs)), res = res + coeffs_(#) * exp(2*(#-1)*pi*i*tau)); res);
+    fromScreen(z) := if(upperHalfPlane, z + halfPlaneOffset*i, i * (1 + z/diskScale) / (1 - z/diskScale));
+    // Works for larger numbers than abs(...).
+    realAbs(x) := if(x<0,-x,x);
+    realToTex(r) := (
+      regional(s, ie, iplus);
+      s = guess(r);
+      ie = indexof(s, "e");
+      iplus = if(s_(ie+1)=="+",ie+1,ie);
+      if(isundefined(s),"\tilde{\infty}",
+      if(ie>0,substring(s,0,ie-1)+"\cdot 10^{"+substring(s,iplus,length(s))+"}",s))
+    );
+    complexToTex(z) := (
+      regional(realStr,imStr,imPlus);
+      realStr = realToTex(re(z));
+      imStr = realToTex(realAbs(im(z)));
+      imPlus = if(or(realStr=="0",realStr=="-0"),"","+");
+      if(and(and(or(realStr=="0",realStr=="-0"),imStr!="0"),imStr!="-0"),"",realStr) + if(or(imStr=="0",imStr=="-0"),"",if(im(z)>0,imPlus,"-") + if(imStr=="1","",imStr + " ") + "i")
+    );
+
+    f(tau) := tau;
+    f3(g) := (
+      regional(tau,a,b,c,d);
+      a = g_1_1;
+      b = g_1_2;
+      c = g_2_1;
+      d = g_2_2;
+      tau = (a*i + b) / (c*i + d);
+      det(g)^(weight/2) * (c*i+d)^(-weight) * i^(rot*weight*if(transform,1,0)) * f(tau);
+    );
+    f2(tau) := (
+      regional(s, nn, aa, kk);
+      s = re(sqrt(im(tau)));
+      nn = [[1, re(tau)], [0, 1]];
+      aa = [[s, 0], [0, 1/s]];
+      kk = [[K.x, -K.y], [K.y, K.x]];
+      if(transform,f3(mat*nn*aa*kk),f3(nn*aa*kk))
+    );
+    resetclock();
+    scale = 15;
+    transform = false;
+    upperHalfPlane = false;
+    halfPlaneOffset = 2;
+    brightnessScale = 7;
+    diskScale = 2.8;
+    weight = 0;
+    level = 1;
+    mat = [[0,-1],[1,0]];
+    rot = 0;
+    numTerms = 15;
+    coeffs = [1];
+  </script><script id="csdraw" type="text/x-cindyscript" data-svelte-h="svelte-x4x7hq">colorplot((
+      regional(tau, result);
+      tau = fromScreen(z);
+      if(im(tau)<0,grey(0.1),
+        result = f2(tau);
+        h = mod(im(log(result)) + 2 * pi, 2 * pi);
+        l = 1 / (1 + exp(-re(log(result)) / brightnessScale));
+        hslToRgb(h, 0.8, l);
+      ))
+    );
+    if(upperHalfPlane, (
+      apply(-5..5, drawText((#,-halfPlaneOffset - 0.2), #, color->grey(0.9), size->12, align->"mid", family->"Segoe UI"));
+      ), (
+      apply(-5..5, (
+        drawText((diskScale + 0.1) * (re((# - i) / (# + i)), im((# - i) / (# + i))), #, color->grey(0.9), size->12, align->"mid", family->"Segoe UI")
+      ));
+      drawText((diskScale + 0.1) * (1,0), "$\infty$", color->grey(0.9), size->12, align->"mid", family->"Segoe UI");
+    ));
+    tauMouse = fromScreen(complex(mouse()));
+    textLoc = screenbounds()_4_[1,2];
+    textLoc2 = screenbounds()_3_[1,2];
+    if(im(tauMouse)>=0,(
+      drawText(textLoc + (0.1,0.4), "$\tau="+complexToTex(tauMouse),color->grey(0.7), size->18);
+      drawText(textLoc + (0.1,0.1), "$f(\tau)=" + complexToTex(f2(tauMouse)), color->grey(0.7), size->18)
+    ));
+    drawText(textLoc2 + (-0.1,0.1), "$f(\infty i)=" + complexToTex(f2(100*i)/10^weight), color->grey(0.7), size->18, align->"right");</script><!-- HEAD_svelte-1nb3y7k_END -->
+</head>
+
+<body data-sveltekit-preload-data="hover">
+	<div style="display: contents">  <div class="flex flex-col min-h-screen"><header class="svelte-1u9z1tp"><div class="corner svelte-1u9z1tp" data-svelte-h="svelte-1jb641n"><a href="https://kit.svelte.dev" class="svelte-1u9z1tp"><img src="/_app/immutable/assets/svelte-logo.87df40b8.svg" alt="SvelteKit" class="svelte-1u9z1tp"></a></div> <nav class="svelte-1u9z1tp"><svg viewBox="0 0 2 3" aria-hidden="true" class="svelte-1u9z1tp"><path d="M0,0 L1,2 C1.5,3 1.5,3 2,3 L2,0 Z" class="svelte-1u9z1tp"></path></svg> <ul class="svelte-1u9z1tp"><li class="svelte-1u9z1tp"><a href="/" class="svelte-1u9z1tp" data-svelte-h="svelte-5a0zws">Home</a></li> <li class="svelte-1u9z1tp"><a href="/about" class="svelte-1u9z1tp" data-svelte-h="svelte-iphxk9">About</a></li> <li class="svelte-1u9z1tp"><a href="/sverdle" class="svelte-1u9z1tp" data-svelte-h="svelte-1mtf8rh">Sverdle</a></li> <li class="svelte-1u9z1tp"><a href="/modular" class="svelte-1u9z1tp" data-svelte-h="svelte-b7w5n4">Modular Forms</a></li> <li aria-current="page" class="svelte-1u9z1tp"><a href="/automorphic" class="svelte-1u9z1tp" data-svelte-h="svelte-10lz7fm">Automorphic Forms</a></li> <li class="svelte-1u9z1tp"><a href="/metaplectic" class="svelte-1u9z1tp" data-svelte-h="svelte-x0j0zq">Mp<sub>2</sub></a></li> <li class="svelte-1u9z1tp"><a href="/chess" class="svelte-1u9z1tp" data-svelte-h="svelte-shkdcv">Chess</a></li> <li class="svelte-1u9z1tp"><a href="/runemetrics" class="svelte-1u9z1tp" data-svelte-h="svelte-1y8r4dp">Runemetrics</a></li> <li class="svelte-1u9z1tp"><a href="/test" class="svelte-1u9z1tp" data-svelte-h="svelte-1s9z8d7">Test</a></li> <li class="svelte-1u9z1tp"><a href="/test2" class="svelte-1u9z1tp" data-svelte-h="svelte-1x2fxod">Test 2</a></li> <li class="svelte-1u9z1tp"><a href="/test3" class="svelte-1u9z1tp" data-svelte-h="svelte-1pwn9vd">Test 3</a></li> <li class="svelte-1u9z1tp"><a href="/test4" class="svelte-1u9z1tp" data-svelte-h="svelte-78j7e9">Test 4</a></li> <li class="svelte-1u9z1tp"><a href="/test5" class="svelte-1u9z1tp" data-svelte-h="svelte-1swkq9p">Test 5</a></li></ul> <svg viewBox="0 0 2 3" aria-hidden="true" class="svelte-1u9z1tp"><path d="M0,0 L0,3 C0.5,3 0.5,3 1,2 L2,0 Z" class="svelte-1u9z1tp"></path></svg></nav> <div class="corner svelte-1u9z1tp" data-svelte-h="svelte-1gilmbv"><a href="https://github.com/sveltejs/kit" class="svelte-1u9z1tp"><img src="/_app/immutable/assets/github.1ea8d62e.svg" alt="GitHub" class="svelte-1u9z1tp"></a></div> </header> <main class="flex-1 flex flex-col mx-auto max-w-7xl w-full p-4">  <div><div class="bg-indigo-300/20 p-2 shadow-md flex flex-wrap gap-2"><label>Modular form:
+      <select><option value="0">id</option><option value="1">exp</option><option value="2">from coefficients</option><option value="3">j-invariant</option><option value="4">cube root of j-invariant</option><option value="5">θ_2</option><option value="6">θ_3</option><option value="7">θ_4</option><option value="8">θ_3 θ_2 product</option><option value="9">eta</option><option value="10">E_2</option><option value="11">Non-holomorphic E_2</option><option value="12">Holomorphic E_2</option><option value="13">E_4</option><option value="14">E_6</option><option value="15">E_8</option><option value="16">E_10</option><option value="17">E_12</option><option value="18">Δ</option><option value="19">E_14</option><option value="20">Level 3 weight 1 Eisenstein series</option><option value="21">Level 4 weight 1 Eisenstein series</option><option value="22">Level 6 weight 1 Eisenstein series</option><option value="23">Level 6 weight 1 non-cusp form</option><option value="24">Level 7 weight 1 Eisenstein series</option><option value="25">Level 8 weight 1 Eisenstein series</option><option value="26">Level 8 weight 1 non-cusp form</option><option value="27">Level 9 weight 1 Eisenstein series</option><option value="28">Level 9 weight 1 non-cusp form</option><option value="29">Level 11 weight 1 Eisenstein series</option><option value="30">Level 12 weight 1 non-cusp form</option><option value="31">Level 14 weight 1 Eisenstein series</option><option value="32">Level 14 weight 1 Eisenstein series 2</option><option value="33">Level 15 weight 1 Eisenstein series</option><option value="34">Level 15 weight 1 non-cusp form</option><option value="35">Level 23 weight 1 Eisenstein series</option><option value="36">Level 23 weight 1 Eisenstein series 2</option><option value="37">Level 23 weight 1 cusp form</option><option value="38">Level 2 weight 2 Eisenstein series</option><option value="39">Level 3 weight 2 Eisenstein series</option><option value="40">Level 4 weight 2 Eisenstein series</option><option value="41">Level 4 weight 2 non-cusp form</option><option value="42">Level 5 weight 2 Eisenstein series</option><option value="43">Level 5 weight 2 A4* theta series</option><option value="44">Level 5 weight 2 non-cusp form</option><option value="45">Level 11 weight 2 Eisenstein series</option><option value="46">Level 11 weight 2 Eisenstein series 2</option><option value="47">Newform 11a</option><option value="48">Newform 14a</option><option value="49">Newform 15a</option><option value="50">Newform 17a</option><option value="51">Newform 17a (slow convergence)</option><option value="52">Newform 19a (slow convergence)</option><option value="53">Newform 20a</option><option value="54">Newform 21a (slow convergence)</option><option value="55">Newform 24a</option><option value="56">Newform 26a (slow convergence)</option><option value="57">Newform 26b (slow convergence)</option><option value="58">Newform 27a</option><option value="59">Newform 30a</option><option value="60">Level 30 weight 2 old cusp form</option><option value="61">Level 30 weight 2 old cusp form 2</option><option value="62">Newform 32a</option><option value="63">Newform 33a</option><option value="64">Newform 34a (slow convergence)</option><option value="65">Newform 35a</option><option value="66">Newform 36a</option><option value="67">Newform 37a (slow convergence)</option><option value="68">Newform 37b (slow convergence)</option><option value="69">Newform 38a (slow convergence)</option><option value="70">Newform 38b (slow convergence)</option><option value="71">Newform 39a (slow convergence)</option><option value="72">Newform 40a (slow convergence)</option><option value="73">Level 7 weight 3 cusp form</option><option value="74">Newform 19.3.b.a</option></select></label> <label>Terms: <input type="number" min="1" max="100" class="w-20" value="15"></label> <label>Level: <input type="number" min="1" max="100" class="w-20" value="1"></label> <label>Weight: <input type="number" min="-100" max="100" step="0.5" class="w-20" value="0"></label> </div></div> <div class="flex gap-2"><div class="flex flex-col bg-indigo-300/20 p-2 my-2 shadow-md w-[250px]"><div class="grid grid-cols-[1fr_60px]">Upper half plane <label class="switch svelte-kxv4e0"><input type="checkbox" class="svelte-kxv4e0"> <span class="slider svelte-kxv4e0"></span> </label>
+      Transform <label class="switch svelte-kxv4e0"><input type="checkbox" class="svelte-kxv4e0"> <span class="slider svelte-kxv4e0"></span> </label> <span data-svelte-h="svelte-8thac">Rotation</span><input type="number" min="0" max="12" value="0"> <span data-svelte-h="svelte-9ym2i3">Brightness scale</span><input type="number" min="1" max="20" value="7"> </div>
+    Matrix
+    <div class="border border-indigo-300 bg-red-500/20 px-2 py-1 my-1 text-center self-center"><div class="grid grid-cols-2 w-auto"><input type="number" class="w-[60px]" value="0"><input type="number" class="w-[60px]" value="-1"><input type="number" class="w-[60px]" value="1"><input type="number" class="w-[60px]" value="0"></div>
+      det = 1</div> <div class="text-center"><button data-svelte-h="svelte-1xyrr1k">Default</button> <button data-svelte-h="svelte-iafpft">Id</button></div></div> <div class="w-full h-[600px] self-center"></div></div> <div class="flex flex-col gap-2 bg-indigo-300/20 p-2 my-1 shadow-md"><label class="flex gap-2 items-center">CindyScript: <input class="w-full font-mono text-sm" autocomplete="off" value="f(tau) := tau"></label> <textarea class="w-full h-32 font-mono text-sm" readonly></textarea> <h2 data-svelte-h="svelte-18fx0gf">Legend</h2> <ul data-svelte-h="svelte-7xqlrp"><li>H: toggle upper half plane</li> <li>Space: toggle transform</li> <li>T: τ ↦ τ + 1 (Shift+T to perform inverse)</li> <li>R: τ ↦ τ/(1 - τ) (Shift+R to perform inverse)</li> <li>S: τ ↦ −1/τ</li> <li>W: τ ↦ τ + 1 left action</li> <li>Q: τ ↦ τ/(τ + 1) left action</li> <li>F: Fricke involution</li> <li>I: Reset to identity</li></ul></div></main> <footer class="flex flex-col p-3 sm:px-0 justify-center items-center"><p>© 🤣 (count = 0)</p></footer></div> 
+			
+			<script>
+				{
+					__sveltekit_5ka028 = {
+						base: new URL(".", location).pathname.slice(0, -1),
+						env: {}
+					};
+
+					const element = document.currentScript.parentElement;
+
+					const data = [null,null];
+
+					Promise.all([
+						import("./_app/immutable/entry/start.091ca969.js"),
+						import("./_app/immutable/entry/app.a2c75490.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 4],
+							data,
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+</body>
+
+</html>
