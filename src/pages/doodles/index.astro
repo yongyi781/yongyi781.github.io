@@ -1,0 +1,59 @@
+---
+import Card from "../../components/Card.astro"
+import { SITE_TITLE, SITE_DESCRIPTION } from "../../consts"
+import Layout from "../../layouts/Layout.astro"
+---
+
+<Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+  <ul class="flex flex-col gap-2">
+    <li>
+      <Card name="Modular form plotter" href="/doodles/modular-forms">
+        <p>
+          Modular forms are amazing creatures from number theory. I made this tool to help visualize them. Made with
+          Svelte and CindyJS.
+        </p>
+        <p class="text-gray-500 mt-4 mx-5 text-sm">Created around 2023.</p>
+      </Card>
+    </li>
+    <li>
+      <Card name="Musical Spectrogram" href="/doodles/spectrogram" target="_blank">
+        <p>
+          A spectrogram that is color-coded so you can identify pitches in any sound easily. I made this to have a
+          version of the (no longer maintained) PitchLab iOS app that is usable on a PC. I use this a lot!
+        </p>
+        <p class="text-gray-500 mt-4 mx-5 text-sm">Created around 2021.</p>
+      </Card>
+    </li>
+    <li>
+      <Card name="Living in other topologies" href="/doodles/mobius" target="_blank">
+        <p>
+          Inspired by the question <i>What would the world look like if we lived on a möbius strip?</i>, I made this
+          demo using HTML and Vue to answer this question. This demo generalizes possible topologies of maps far beyond
+          mobius strips, and you can even make your own custom maps. See for yourself!
+        </p>
+        <p class="text-gray-500 mt-4 mx-5 text-sm">Created around 2020.</p>
+      </Card>
+    </li>
+    <li>
+      <Card name="Lights out solver" href="/doodles/lights-out" target="_blank">
+        <p>
+          A little Lights Out solver. Check the source code for how linear algebra over the finite field of order 2 is
+          used in the theory behind solving this game!
+        </p>
+        <p class="text-gray-500 mt-4 mx-5 text-sm">Created around June 2019.</p>
+      </Card>
+    </li>
+    <li>
+      <Card name="Frequency discrimination test" href="/doodles/freq-test" target="_blank">
+        <p>
+          A HTML and JS app I designed to measure frequency discrimination using two-alternative forced choice (2AFC),
+          as part of a summer UROP project in the RLE lab at MIT. I'm sure you'll do much better than I did on this test
+          😋. Uses <code>knockout.js</code> and <code>Tone.js</code>.
+        </p>
+        <p class="text-gray-500 mt-4 mx-5 text-sm">Created around 2015.</p>
+      </Card>
+    </li>
+  </ul>
+  <hr class="my-8" />
+  <p>There are also some secret doodles that are available if you happen to know the url…</p>
+</Layout>

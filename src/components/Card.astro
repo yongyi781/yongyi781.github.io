@@ -1,0 +1,14 @@
+---
+import type { HTMLAttributes } from "astro/types"
+
+export interface Props extends HTMLAttributes<"a"> {
+  name: string
+}
+
+const { name, ...props } = Astro.props
+---
+
+<a class="block bg-slate-50 rounded-lg shadow-sm p-5 hover:bg-slate-200 transition-colors" {...props}>
+  <h2 class="text-2xl font-medium">{name}</h2>
+  <slot />
+</a>

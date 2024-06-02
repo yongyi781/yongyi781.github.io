@@ -1,0 +1,11 @@
+---
+import Card from "../components/Card.astro"
+import { SITE_TITLE, SITE_DESCRIPTION } from "../consts"
+import Layout from "../layouts/Layout.astro"
+---
+
+<Layout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+  <Card name="Doodles" href="/doodles" />
+  <Card name="Blog" href="/blog" />
+  <Card name="About" href="/about" />
+</Layout>

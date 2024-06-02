@@ -1,0 +1,45 @@
+{
+  "name": "yongyi781.github.io",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "My personal website!",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.7.0",
+    "@astrojs/mdx": "^3.0.1",
+    "@astrojs/rss": "^4.0.6",
+    "@astrojs/sitemap": "^3.1.5",
+    "@astrojs/svelte": "^5.4.0",
+    "@astrojs/tailwind": "^5.1.0",
+    "@tailwindcss/typography": "^0.5.13",
+    "astro": "^4.9.2",
+    "mathlifier": "^1.3.5",
+    "rehype-katex": "^7.0.0",
+    "remark-math": "^6.0.0",
+    "svelte": "5.0.0-next.90",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.0",
+    "prettier-plugin-astro": "^0.14.0"
+  },
+  "prettier": {
+    "singleQuote": false,
+    "tabWidth": 2,
+    "useTabs": false,
+    "arrowParens": "avoid",
+    "bracketSameLine": true,
+    "experimentalTernaries": true,
+    "printWidth": 120,
+    "semi": false,
+    "trailingComma": "none"
+  },
+  "packageManager": "pnpm@9.1.4+sha512.9df9cf27c91715646c7d675d1c9c8e41f6fce88246f1318c1aa6a1ed1aeb3c4f032fcdf4ba63cc69c4fe6d634279176b5358727d8f2cc1e65b65f43ce2f8bfb0"
+}
