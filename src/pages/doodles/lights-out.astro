@@ -1,0 +1,460 @@
+---
+import Layout from "../../layouts/Layout.astro"
+---
+
+<Layout title="Lights Out Solver">
+  <div>
+    <h1 class="text-4xl mb-4">Lights Out Solver</h1>
+    <p>
+      This utility will solve the Lights Out puzzle <strong>in the least amount of moves</strong>, without forcing.
+    </p>
+    <p>
+      Left-click to imbue, right-click to force. When you click <b>Solve</b>, the tiles marked 1 are the tiles to imbue.
+    </p>
+    <p>
+      The average layout (solvable or unsolvable) takes <span id="average1"></span> actions to solve, where imbuing and forcing
+      count as 1 action each.
+    </p>
+    <div class="text-center">
+      <button
+        class="bg-green-500 hover:enabled:bg-green-700 text-white font-medium py-2 px-4 rounded disabled:opacity-50"
+        id="solve">Solve</button
+      >
+      <button
+        class="bg-yellow-500 hover:enabled:bg-yellow-700 text-white font-medium py-2 px-4 rounded disabled:opacity-50"
+        id="unsolve">
+        Unsolve
+      </button>
+      <button
+        class="bg-red-500 hover:enabled:bg-red-700 text-white font-medium py-2 px-4 rounded disabled:opacity-50"
+        id="reset">Reset</button
+      >
+      <button
+        class="bg-blue-500 hover:enabled:bg-blue-700 text-white font-medium py-2 px-4 rounded disabled:opacity-50"
+        id="randomize">
+        Randomize
+      </button>
+      <table id="board" class="flex my-1 justify-center">
+        {
+          new Array(5).fill(0).map((_, i) => (
+            <tr>
+              {new Array(5).fill(0).map((_, j) => (
+                <td data-x={j} data-y={i} />
+              ))}
+            </tr>
+          ))
+        }
+      </table>
+      <input type="number" class="form-control" name="code" id="code" aria-describedby="helpId" placeholder="Code" />
+      <p>This layout takes <span id="score">0</span> imbue/force actions to solve.</p>
+    </div>
+  </div>
+
+  <script is:inline>
+    let N = 5
+    let squares = []
+    let vector = []
+    let offsets = [
+      [0, 0],
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1]
+    ]
+
+    let lightsOutMatrix = [
+      [1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1]
+    ]
+
+    let pseudoinverse = [
+      [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0],
+      [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1],
+      [0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+      [0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1],
+      [0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0],
+      [0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0],
+      [0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+      [0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0],
+      [0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
+      [0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0],
+      [0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0],
+      [0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1],
+      [0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1],
+      [0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0],
+      [0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0],
+      [0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0],
+      [0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0],
+      [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1],
+      [0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0]
+    ]
+
+    // All the vectors in the nullspace of the Lights Out matrix, or that flip all the tiles.
+    let nullOrFlipAllVectors = [
+      [
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0]
+      ],
+      [
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1],
+        [0, 0, 0, 0, 0],
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1]
+      ],
+      [
+        [0, 1, 1, 1, 0],
+        [1, 0, 1, 0, 1],
+        [1, 1, 0, 1, 1],
+        [1, 0, 1, 0, 1],
+        [0, 1, 1, 1, 0]
+      ],
+      [
+        [1, 1, 0, 1, 1],
+        [0, 0, 0, 0, 0],
+        [1, 1, 0, 1, 1],
+        [0, 0, 0, 0, 0],
+        [1, 1, 0, 1, 1]
+      ],
+      [
+        [0, 1, 1, 0, 1],
+        [0, 1, 1, 1, 0],
+        [0, 0, 1, 1, 1],
+        [1, 1, 0, 1, 1],
+        [1, 1, 0, 0, 0]
+      ],
+      [
+        [1, 1, 0, 0, 0],
+        [1, 1, 0, 1, 1],
+        [0, 0, 1, 1, 1],
+        [0, 1, 1, 1, 0],
+        [0, 1, 1, 0, 1]
+      ],
+      [
+        [0, 0, 0, 1, 1],
+        [1, 1, 0, 1, 1],
+        [1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 0],
+        [1, 0, 1, 1, 0]
+      ],
+      [
+        [1, 0, 1, 1, 0],
+        [0, 1, 1, 1, 0],
+        [1, 1, 1, 0, 0],
+        [1, 1, 0, 1, 1],
+        [0, 0, 0, 1, 1]
+      ]
+    ]
+
+    let scores
+
+    function average(arr) {
+      return arr.reduce((a, b) => a + b, 0) / arr.length
+    }
+
+    // function averageSolvable(arr) {
+    //   return average(arr.filter((x, i) => isSolvable(codeToVector(i))))
+    // }
+
+    function init() {
+      vector = Array(5).fill(0).map(() => Array(5).fill(0))
+      let tds = document.querySelectorAll("table > tbody > tr > td")
+      squares = Array(5)
+        .fill(0)
+        .map((_, i) =>
+          Array(5)
+            .fill(0)
+            .map((_, j) => tds[5 * i + j])
+        )
+    }
+
+    function isInRange(value) {
+      return value >= 0 && value < N
+    }
+
+    function set(x, y, value) {
+      if (value) {
+        vector[y][x] = 1
+        squares[y][x].classList.add("on")
+      } else {
+        vector[y][x] = 0
+        squares[y][x].classList.remove("on")
+      }
+    }
+
+    function flip(x, y) {
+      set(x, y, !vector[y][x])
+    }
+
+    function imbue(x, y, mark = true) {
+      if (mark) squares[y][x].classList.toggle("one")
+
+      offsets.forEach(function (offset) {
+        let xi = x + offset[0]
+        let yi = y + offset[1]
+        if (isInRange(xi) && isInRange(yi)) {
+          flip(xi, yi)
+        }
+      })
+    }
+
+    // Tricky point: vector is actually a square array, but we treat it as a column vector in multiplying.
+    // Also, this is done mod 2.
+    function multiply(matrix, vector) {
+      let n = vector.length
+
+      let result = []
+      for (let y = 0; y < n; y++) {
+        result[y] = []
+        for (let x = 0; x < n; x++) {
+          result[y][x] = 0
+        }
+      }
+      for (let i = 0; i < n * n; i++) {
+        let x = i % n,
+          y = Math.floor(i / n)
+        for (let j = 0; j < n * n; j++) {
+          result[y][x] += matrix[i][j] * vector[Math.floor(j / n)][j % n]
+          result[y][x] %= 2
+        }
+      }
+      return result
+    }
+
+    function add(vector1, vector2) {
+      let result = []
+      for (let y = 0; y < N; y++) {
+        result[y] = []
+        for (let x = 0; x < N; x++) {
+          result[y][x] = (vector1[y][x] + vector2[y][x]) % 2
+        }
+      }
+      return result
+    }
+
+    function totalOnes(vector) {
+      let result = 0
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          result += vector[y][x]
+        }
+      }
+      return result
+    }
+
+    function equal(vector1, vector2) {
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          if (vector1[y][x] !== vector2[y][x]) {
+            return false
+          }
+        }
+      }
+      return true
+    }
+
+    function isSolvable(vector) {
+      return equal(multiply(lightsOutMatrix, multiply(pseudoinverse, vector)), vector)
+    }
+
+    function getAllSolutions(vector) {
+      // Multiply by solution matrix
+      let solVector = multiply(pseudoinverse, vector)
+      return nullOrFlipAllVectors.map(function (v) {
+        return add(v, solVector)
+      })
+    }
+
+    function updateSolvable() {
+      let solvable = isSolvable(vector)
+      for (let x of document.querySelectorAll("#solve, #unsolve"))
+        if (solvable) x.removeAttribute("disabled")
+        else x.setAttribute("disabled", true)
+      document.querySelector("#solve").textContent = solvable ? "Solve" : "Unsolvable"
+      let code = getCode()
+      document.querySelector("#code").value = code
+      document.querySelector("#score").textContent = scores[code]
+    }
+
+    function reset() {
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          vector[y][x] = 0
+          squares[y][x].classList.remove("on", "one")
+        }
+      }
+      updateSolvable()
+    }
+
+    function getCode() {
+      let code = 0
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          if (vector[y][x] == 1) code ^= 1 << (N * y + x)
+        }
+      }
+      return code
+    }
+
+    function setCode(code) {
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          set(x, y, code & (1 << (N * y + x)))
+        }
+      }
+    }
+
+    function codeToVector(code) {
+      let result = []
+      for (let y = 0; y < N; y++) {
+        result[y] = []
+        for (let x = 0; x < N; x++) {
+          result[y][x] = code & (1 << (N * y + x))
+        }
+      }
+      return result
+    }
+
+    init()
+
+    document.querySelector("#board").addEventListener("mousedown", e => {
+      e.preventDefault()
+      let td = e.target
+      if (td.tagName !== "TD") return
+      let x = parseInt(td.dataset.x, 10)
+      let y = parseInt(td.dataset.y, 10)
+
+      if (e.button === 0) {
+        imbue(x, y)
+      } else if (e.button === 2) {
+        flip(x, y)
+      }
+
+      updateSolvable()
+    })
+
+    document.querySelector("#board").addEventListener("contextmenu", e => {
+      e.preventDefault()
+    })
+
+    document.querySelector("#solve").addEventListener("click", function () {
+      let minSol = getAllSolutions(vector)
+        .map(function (v) {
+          return { vector: v, total: totalOnes(v) }
+        })
+        .reduce(function (prev, curr) {
+          return prev.total < curr.total ? prev : curr
+        })
+
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          if (minSol.vector[y][x] === 1) {
+            imbue(x, y)
+          }
+        }
+      }
+    })
+
+    document.querySelector("#unsolve").addEventListener("click", function () {
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          if (squares[y][x].classList.contains("one")) {
+            imbue(x, y)
+          }
+        }
+      }
+    })
+
+    document.querySelector("#reset").addEventListener("click", function () {
+      reset()
+    })
+
+    document.querySelector("#randomize").addEventListener("click", function () {
+      reset()
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          if (Math.random() < 0.5) {
+            imbue(x, y, false)
+          }
+        }
+      }
+      updateSolvable()
+    })
+
+    document.querySelector("#code").addEventListener("change", () => {
+      let code = document.querySelector("#code").value & ((1 << (N * N)) - 1)
+      document.querySelector("#code").value = code
+      setCode(code)
+    })
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const response = await fetch("/data/scores.bin")
+      scores = new Uint8Array(await response.arrayBuffer())
+      console.log(average(scores))
+      document.querySelector("#average1").textContent = Math.round(1e7 * average(scores)) / 1e7
+    })
+  </script>
+</Layout>
+<style>
+  .center {
+    text-align: center;
+  }
+
+  .inline-block {
+    display: inline-block;
+  }
+
+  table {
+    font-size: 24px;
+  }
+
+  table td {
+    background-color: #ffffcc;
+    border: 1px solid grey;
+    height: 84px;
+    text-align: center;
+    transition: all 0.15s ease-in-out;
+    width: 84px;
+  }
+
+  table td.on {
+    background-color: #040;
+    color: white;
+  }
+
+  .one:after {
+    content: "1";
+  }
+</style>
