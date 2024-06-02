@@ -38,7 +38,7 @@ const defaultNumCoeffs = 501
 
 export const modularForms: ModularForm[] = [
   {
-    name: "id",
+    name: "id (not a modular form)",
     level: 1,
     weight: 0,
     rot: 0,
@@ -47,7 +47,7 @@ export const modularForms: ModularForm[] = [
     }
   },
   {
-    name: "exp",
+    name: "exp (not a modular form)",
     params: [{ name: "Frequency", default: 1 }],
     level: 1,
     weight: 0,

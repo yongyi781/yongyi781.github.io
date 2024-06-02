@@ -6,15 +6,16 @@ import { SITE_DESCRIPTION, SITE_TITLE } from "../consts"
 
 export interface Props {
   title?: string
-  description?: string,
+  description?: string
   maxWidth?: number
+  useKatex?: boolean
 }
-const { title = SITE_TITLE, description = SITE_DESCRIPTION, maxWidth = 896 } = Astro.props
+const { title = SITE_TITLE, description = SITE_DESCRIPTION, useKatex = false } = Astro.props
 ---
 
 <html lang="en">
   <head>
-    <BaseHead {title} {description} />
+    <BaseHead {title} {description} {useKatex} />
   </head>
   <body class="min-h-screen flex flex-col bg-gradient-to-t from-slate-100 via-slate-50 to-slate-100">
     <Header />

@@ -8,7 +8,7 @@ type Props = CollectionEntry<"blog">["data"]
 const { title, description, pubDate, updatedDate } = Astro.props
 ---
 
-<Layout title={title} description={description}>
+<Layout {title} {description} useKatex={true}>
   <article>
     <div class="prose prose-cyan">
       <div>
