@@ -46,7 +46,12 @@
       integrity="sha512-WoO4Ih0CDOSLYafy22wZD/mcJ7k0ESLqtQsFa6zFKnEUrbtuGU+GkLtVhgt93xa2qewG5gKEC6CWlN8OaCTSVg=="
       crossorigin="anonymous"
       referrerpolicy="no-referrer"></script>
-    <script src="https://d3js.org/d3-color.v3.min.js"></script>
+    <!-- <script src="https://d3js.org/d3-color.v3.min.js"></script> -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"
+      integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
     <script>
       const canvas = document.querySelector("canvas")
       const offCanvas = document.createElement("canvas")
@@ -78,18 +83,18 @@
         sampleRate: 48000,
         slope: 0.14,
         running: true,
-        colorWheelOffset: 0.36,
+        colorWheelOffset: 0.35,
         fftSize: 13,
         octaveDivision: 12,
         octaveFreq: 440 / Math.pow(2, 9 / 12),
         oscillatorVolume: -35,
         oscillatorType: "sine",
         oscillatorSnap: true,
-        pauseOrResume: function () {
+        pauseOrResume: () => {
           this.running = !this.running
           pauseButton.name(this.running ? "Pause" : "Resume")
         },
-        clear: function () {
+        clear: () => {
           offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height)
         }
       }
@@ -118,10 +123,12 @@
         return (1 - reverseInterpolate(config.minFreq, config.maxFreq, freq)) * canvas.height
       }
 
-      function getColor(pitch, intensity) {
+      function getColor(pitch, intensity, alpha = 1) {
         intensity = Math.max(0, Math.min(1, intensity))
-        var hue = (pitch + config.colorWheelOffset) % 1
-        return d3.hcl(360 * hue, 100 * intensity, 75 * intensity)
+        let l = 0.67 * intensity
+        let c = 0.2 * intensity
+        let h = 360 * ((pitch + config.colorWheelOffset) % 1)
+        return chroma.oklch(l, c, h, alpha)
       }
 
       // Returns 0-1, 0 corresponds to C.
@@ -290,9 +297,9 @@
             let vv = getIntensity(freqData, (freq / audioContext.sampleRate) * 2 * analyser.frequencyBinCount, gain)
             let color = getColor(getPitch(freq), vv).rgb()
 
-            imageData.data[i++] = color.r
-            imageData.data[i++] = color.g
-            imageData.data[i++] = color.b
+            imageData.data[i++] = color[0]
+            imageData.data[i++] = color[1]
+            imageData.data[i++] = color[2]
             imageData.data[i++] = 255
           }
           offCtx.putImageData(imageData, offCanvas.width - 1, 0)
@@ -327,7 +334,7 @@
         window.metrics = metrics
         let x = Math.min(lastX + 6, canvas.width - metrics.width - 3)
         let y = Math.max(oscY - 12, metrics.actualBoundingBoxAscent + 3)
-        let color = getColor(getPitch(freq), oscillator == null ? 0.5 : 1).toString()
+        let color = getColor(getPitch(freq), oscillator == null ? 0.5 : 1)
         ctx.fillStyle = oscillator == null ? "#ccc" : color
         ctx.font = "16px 'Open Sans', 'Lucida Grande', 'Verdana', sans-serif"
         ctx.fillText(str, x, y)
@@ -367,7 +374,7 @@
       })
 
       resizeCanvas()
-      ;(async () => {
+      document.addEventListener("DOMContentLoaded", async () => {
         setSampleRate(config.sampleRate)
         await initMicrophoneList()
 
@@ -417,7 +424,7 @@
 
         updateFFTSize()
         requestAnimationFrame(render)
-      })()
+      })
     </script>
   </body>
 </html>
