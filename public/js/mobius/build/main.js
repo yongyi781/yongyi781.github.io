@@ -1,15 +1,10 @@
 import { createApp, onMounted, ref, watch } from "vue";
 import { Dir, Room, RoomView } from "./Room.js";
 import { GraphUI } from "./GraphUI.js";
-
-interface Connection { s: Room; sDir: Dir; t: Room; tDir?: Dir; flip?: boolean; }
-
-namespace Connection {
-    export var regex = /^(\d+)([WNES])(\d+)([WNES]?)(['!]?)$/;
-}
-
-interface MyConnection { s: number; sDir: Dir; t: number; tDir?: Dir; flip?: boolean; }
-
+var Connection;
+(function (Connection) {
+    Connection.regex = /^(\d+)([WNES])(\d+)([WNES]?)(['!]?)$/;
+})(Connection || (Connection = {}));
 function getRandomColor() {
     var letters = '0123456789ABCDEF';
     var color = '#';
@@ -18,36 +13,30 @@ function getRandomColor() {
     }
     return color;
 }
-
 createApp({
     setup() {
         const u = new URLSearchParams(location.search);
-
-        const defaults: Record<string, any> = {
-            godMode: true,
+        const defaults = {
+            godMode: false,
             allowMultipleInEdges: false,
             graph: "custom",
             code: "",
             drawDistance: 5
-        }
-
-        const godMode = ref(u.get("godMode") !== "false");
+        };
+        const godMode = ref(u.get("godMode") === "true");
         const allowMultipleInEdges = ref(u.get("allowMultipleInEdges") === "true");
         const graph = ref(u.get("graph") || "mobius");
-        const code = ref(u.get("code") || defaults.code as string);
-        const rooms = ref<Room[]>([]);
+        const code = ref(u.get("code") || defaults.code);
+        const rooms = ref([]);
         const invalidCodeFeedback = ref("");
-        const drawDistance = ref(parseInt(u.get("drawDistance") || "", 10) || defaults.drawDistance as number);
+        const drawDistance = ref(parseInt(u.get("drawDistance") || "", 10) || defaults.drawDistance);
         const numRandomRooms = ref(50);
-
-        let ui: GraphUI;
-
+        let ui;
         function statusText() {
             let notVisited = rooms.value.filter(r => !r.visited).map(r => r.id);
             return notVisited.length === 0 ? "Congratulations! You found all the rooms!" : `${notVisited.length} rooms left to find: ${notVisited.join(", ")}`;
         }
-
-        function reset2(numRooms: number, connections: MyConnection[]) {
+        function reset2(numRooms, connections) {
             rooms.value = [];
             for (let i = 1; i <= numRooms; i++) {
                 rooms.value.push(new Room(i, godMode.value));
@@ -61,8 +50,7 @@ createApp({
             ui.reset(new RoomView(rooms.value[0]));
             ui.render();
         }
-
-        function parse(str: string): Connection {
+        function parse(str) {
             let arr = str.toUpperCase().match(Connection.regex);
             if (arr === null) {
                 throw `Cannot parse string ${str}.`;
@@ -81,8 +69,7 @@ createApp({
                 flip: arr[5] !== ""
             };
         }
-
-        function execute(list: Connection[]) {
+        function execute(list) {
             for (let c of list) {
                 let r = c.s.connect({ dir: c.sDir, other: c.t, otherDir: c.tDir, flipOrientation: c.flip, allowMultipleInEdges: allowMultipleInEdges.value });
                 if (!r.success) {
@@ -90,7 +77,7 @@ createApp({
                 }
             }
         }
-        function resetWithCode(str: string) {
+        function resetWithCode(str) {
             rooms.value = [new Room(1, true)];
             let cList = str.split(/[,\s]+/).map(s => parse(s));
             execute(cList);
@@ -100,9 +87,8 @@ createApp({
             }
             ui.render();
         }
-
         function resetToMobiusStrip(width = 10, height = 3) {
-            let connections: MyConnection[] = [];
+            let connections = [];
             for (let y = 0; y < height; y++) {
                 for (let x = 1; x <= width; x++) {
                     if (x < width)
@@ -117,9 +103,8 @@ createApp({
             }
             reset2(width * height, connections);
         }
-
         function resetToKleinBottle(width = 4, height = 4) {
-            let connections: MyConnection[] = [];
+            let connections = [];
             for (let y = 0; y < height; y++) {
                 for (let x = 1; x <= width; x++) {
                     if (x < width)
@@ -133,9 +118,8 @@ createApp({
             }
             reset2(width * height, connections);
         }
-
         function resetToProjectivePlane(width = 4, height = 4) {
-            let connections: MyConnection[] = [];
+            let connections = [];
             for (let y = 0; y < height; y++) {
                 for (let x = 1; x <= width; x++) {
                     if (x < width)
@@ -153,13 +137,11 @@ createApp({
             }
             reset2(width * height, connections);
         }
-
         function resetToWeirdGraph() {
             rooms.value = [];
             for (let i = 1; i <= 12; i++) {
                 rooms.value.push(new Room(i, godMode.value));
             }
-
             for (let r = 0; r < rooms.value.length; r++) {
                 let j = r + 1;
                 for (let i = 0; i < 4; i++) {
@@ -169,9 +151,8 @@ createApp({
             ui.reset(new RoomView(rooms.value[0]));
             ui.render();
         }
-
         function resetToMobiusStrip2(size = 4) {
-            let connections: MyConnection[] = [];
+            let connections = [];
             for (let i = 1; i <= size - 1; i++) {
                 connections.push({ sDir: Dir.E, s: i, t: i + 1 });
                 connections.push({ sDir: Dir.E, s: i + size, t: i + size + 1 });
@@ -183,7 +164,6 @@ createApp({
             connections.push({ sDir: Dir.E, s: 2 * size, t: size + 1, tDir: Dir.S });
             reset2(2 * size, connections);
         }
-
         function resetRandom() {
             rooms.value = [];
             for (let i = 1; i <= Math.max(2, Math.min(600, numRandomRooms.value)); i++) {
@@ -192,7 +172,6 @@ createApp({
                     room.color = getRandomColor();
                 rooms.value.push(room);
             }
-
             for (let r = 0; r < rooms.value.length; r++) {
                 for (let i = 0; i < 4; i++) {
                     let other = rooms.value[Math.floor(Math.random() * rooms.value.length)];
@@ -205,21 +184,19 @@ createApp({
             ui.reset(new RoomView(rooms.value[0]));
             ui.render();
         }
-
         function resetCustom() {
             try {
                 resetWithCode(code.value);
-                document.querySelector<HTMLInputElement>("#customCode")!.setCustomValidity("");
+                document.querySelector("#customCode").setCustomValidity("");
                 graph.value = "custom";
                 return true;
             }
             catch (ex) {
-                document.querySelector<HTMLInputElement>("#customCode")!.setCustomValidity(ex as string);
-                invalidCodeFeedback.value = ex as string;
+                document.querySelector("#customCode").setCustomValidity(ex);
+                invalidCodeFeedback.value = ex;
             }
             return false;
         }
-
         function setGraph() {
             if (graph.value === "custom")
                 resetCustom();
@@ -227,7 +204,8 @@ createApp({
                 let code = document.querySelector(`#graphSelect option[value='${graph.value}']`)?.getAttribute("data-code");
                 if (code != null) {
                     resetWithCode(code);
-                } else {
+                }
+                else {
                     switch (graph.value) {
                         case "B":
                             resetToWeirdGraph();
@@ -255,9 +233,8 @@ createApp({
             }
             updateHistoryState();
         }
-
         function updateHistoryState(replace = true) {
-            let state: Record<string, any> = {
+            let state = {
                 godMode: godMode.value,
                 allowMultipleInEdges: allowMultipleInEdges.value,
                 graph: graph.value,
@@ -277,38 +254,31 @@ createApp({
             else
                 history.pushState(state, "", url);
         }
-
-        function onCodeSubmit(e: Event) {
+        function onCodeSubmit(e) {
             if (resetCustom()) {
                 updateHistoryState(false);
             }
-            document.querySelector("#codeForm")!.classList.add("was-validated");
+            document.querySelector("#codeForm").classList.add("was-validated");
             e.preventDefault();
         }
-
         watch(graph, () => {
             setGraph();
-        })
-
-        watch(code, () => {
-            document.querySelector<HTMLInputElement>("#customCode")!.setCustomValidity("");
-            document.querySelector("#codeForm")!.classList.remove("was-validated");
         });
-
+        watch(code, () => {
+            document.querySelector("#customCode").setCustomValidity("");
+            document.querySelector("#codeForm").classList.remove("was-validated");
+        });
         watch(drawDistance, (value) => {
             ui.setDrawDistance(value);
             ui.render();
             updateHistoryState();
         });
-
         watch(numRandomRooms, () => {
             resetRandom();
         });
-
         onMounted(() => {
-            const mainCanvas = document.querySelector("#mainCanvas") as HTMLCanvasElement;
-            const context = mainCanvas.getContext("2d")!;
-
+            const mainCanvas = document.querySelector("#mainCanvas");
+            const context = mainCanvas.getContext("2d");
             addEventListener("popstate", e => {
                 let state = e.state ?? defaults;
                 godMode.value = state.godMode;
@@ -317,17 +287,13 @@ createApp({
                 code.value = state.code;
                 setGraph();
             });
-
             if (code.value != "") {
                 graph.value = "custom";
             }
-
-            mainCanvas.width = mainCanvas.height = Math.min(document.querySelector("#app")!.clientWidth - 20, innerHeight - 200);
-
+            mainCanvas.width = mainCanvas.height = Math.min(document.querySelector("#app").clientWidth - 20, innerHeight - 200);
             ui = new GraphUI(context, drawDistance.value);
             setGraph();
         });
-
         return {
             godMode,
             allowMultipleInEdges,
