@@ -1,19 +1,85 @@
 ---
-title: "First post"
-description: "Don't read this, it's just lorem ipsum"
-pubDate: "5/31/2024"
+title: "Adventitious triangles"
+description: "A fun excursion on variants of the classic 20-80-80 triangle geometry problem"
+pubDate: "6/5/2024"
+tags: math, geometry, fun
 ---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Vitae ultricies leo integer malesuada nunc vel risus commodo viverra. Adipiscing enim eu turpis egestas pretium. Euismod elementum nisi quis eleifend quam adipiscing. In hac habitasse platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus et malesuada fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea dictumst quisque sagittis. Integer quis auctor elit sed vulputate mi. Dictumst quisque sagittis purus sit amet.
+The classic 20-80-80 triangle geometry problem looks like this.
+![Triangle problem 3](/images/triangles/9_1_3_4.svg)
+We have an isosceles right triangle $\triangle ABC$ with angles 20°, 80°, and 80°, and lines $AE$ and $BD$ with angles as shown. The task is to find the red marked angle at $E$.
 
-Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum quisque non tellus. Habitasse platea dictumst quisque sagittis purus sit amet. Tellus molestie nunc non blandit massa. Cursus vitae congue mauris rhoncus. Accumsan tortor posuere ac ut. Fringilla urna porttitor rhoncus dolor. Elit ullamcorper dignissim cras tincidunt lobortis. In cursus turpis massa tincidunt dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc. Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus arcu felis bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed tempus urna et pharetra pharetra massa massa ultricies mi.
+This is a well known problem, and you might have even seen it shared on social media at some point. You can find the solution on this [Wikipedia page](https://en.wikipedia.org/wiki/Langley%27s_Adventitious_Angles).
 
-Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam sit amet nisl suscipit. Lacus viverra vitae congue eu consequat ac felis donec. Egestas integer eget aliquet nibh praesent tristique magna sit amet. Eget magna fermentum iaculis eu non diam. In vitae turpis massa sed elementum. Tristique et egestas quis ipsum suspendisse ultrices. Eget lorem dolor sed viverra ipsum. Vel turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat semper viverra nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim praesent elementum facilisis. Ultrices tincidunt arcu non sodales neque. Tempus egestas sed sed risus pretium quam vulputate. Viverra suspendisse potenti nullam ac tortor vitae purus faucibus ornare. Fringilla urna porttitor rhoncus dolor purus non. Amet dictum sit amet justo donec enim.
+Here's the fun part no one told you:
+* If you try to generalize the problem with general integral angles (or rational angles) in place of the ones in the image, the red angle will **not** in general be integral or rational.
+* Nevertheless, there are infinitely many triangles where the 5 labeled angles, along with the unknown angle, are rational. We'll call these **rational adventitious triangles**.
 
-Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut consequat semper viverra. Tellus mauris a diam maecenas sed enim ut sem viverra. Venenatis urna cursus eget nunc scelerisque viverra mauris in. Arcu ac tortor dignissim convallis aenean et tortor at. Curabitur gravida arcu ac tortor dignissim convallis aenean et tortor. Egestas tellus rutrum tellus pellentesque eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices tincidunt arcu. Id cursus metus aliquam eleifend mi.
+From what I can tell, it appears that the rational adventitious triangles come in two families:
+* One infinite family whose defining feature is that you can construct a right angle out of the segments or vertically mirrored images of the segments. The triangle at the top of this page is a member of this infinite family, because the vertical mirror of line $AE$ is perpendicular to line $DE$.
+* And a finite family of sporadic triangles where there are no right angles involved.
 
-Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus imperdiet. Id porta nibh venenatis cras sed felis eget velit. Ipsum a arcu cursus vitae. Facilisis magna etiam tempor orci eu lobortis elementum. Tincidunt dui ut ornare lectus sit. Quisque non tellus orci ac. Blandit libero volutpat sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar proin gravida. Egestas integer eget aliquet nibh praesent tristique magna.
+For fun, I enumerated the latter and they're all shown below.
 
-$$
-\zeta(s) = \sum_{n=1}^\infty n^{-s}
-$$
+I'm curious if one can find natural synthetic geometry proofs for each one, similar to the famous solution to the first triangle of this post. Show these problems to your friends and family. If you find any synthetic arguments, let me know!
+
+![Triangle problem 1](/images/triangles/9_1_2_3.svg)
+![Triangle problem 2](/images/triangles/9_1_2_4.svg)
+![Triangle problem 4](/images/triangles/12_3_6_7.svg)
+![Triangle problem 5](/images/triangles/12_3_6_10.svg)
+![Triangle problem 6](/images/triangles/15_1_3_4.svg)
+![Triangle problem 7](/images/triangles/15_1_3_8.svg)
+![Triangle problem 8](/images/triangles/15_1_4_6.svg)
+![Triangle problem 9](/images/triangles/15_1_4_8.svg)
+![Triangle problem 10](/images/triangles/15_1_8_10.svg)
+![Triangle problem 11](/images/triangles/15_1_8_12.svg)
+![Triangle problem 12](/images/triangles/15_6_8_11.svg)
+![Triangle problem 13](/images/triangles/15_10_11_12.svg)
+![Triangle problem 14](/images/triangles/15_10_11_13.svg)
+![Triangle problem 15](/images/triangles/21_1_8_10.svg)
+![Triangle problem 16](/images/triangles/21_6_13_16.svg)
+![Triangle problem 17](/images/triangles/21_6_13_17.svg)
+![Triangle problem 18](/images/triangles/30_12_17_21.svg)
+![Triangle problem 19](/images/triangles/30_12_17_23.svg)
+
+Here is the C++ code I wrote to produce these triangles. Each line in the output is of the form $(g,a,b,c,\pm d)$ and corresponds to the triangle where $\angle ACB=\frac a{2g}\cdot\frac{\pi}2$, line $AE$ is inclined at angle $\frac bg\cdot\frac{\pi}2$ with respect to the vertical, line $BD$ is inclined at angle $\frac cg\cdot\frac{\pi}2$ with respect to the vertical, and line $DE$ is inclined at angle $\frac dg\cdot\frac{\pi}2$ with respect to the vertical.
+```cpp
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <numeric>
+
+using namespace std;
+
+// https://www.geogebra.org/calculator/fgbhynue
+int main()
+{
+    ofstream fout("test_langley_out.txt");
+    for (int denom = 4; denom <= 180; ++denom)
+    {
+        fout << "# denom = " << denom << "\n";
+        for (int a = 1; a < denom; ++a)
+        {
+            for (int b = a + 1; b < denom; ++b)
+            {
+                for (int c = a + 1; c < denom; ++c)
+                {
+                    if (b == c || gcd(gcd(a, b), c) != 1)
+                        continue;
+                    auto aa = numbers::pi / 2 * a / denom;
+                    auto bb = numbers::pi / 2 * b / denom;
+                    auto cc = numbers::pi / 2 * c / denom;
+                    auto x = 1 / tan(aa);
+                    auto y = 1 / tan(bb);
+                    auto z = 1 / tan(cc);
+                    auto result = atan((x * x - y * z) / (x * x * (y - z)));
+                    auto df = result * denom / (numbers::pi / 2);
+                    auto d = (int)round(df);
+                    if (abs(df - d) < 1e-9 && b + c != denom && b + abs(d) != denom && c + abs(d) != denom)
+                        fout << denom << " " << a << " " << b << " " << c << " " << d << "\n";
+                }
+            }
+        }
+    }
+}
+```
