@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Switch from "./Switch.svelte"
-  import CindyCanvas from "./CindyCanvas.svelte"
-  import { fromCoeffs, modularForms } from "../ModularForm.ts"
   import { onMount } from "svelte"
+  import { fromCoeffs, modularForms } from "../ModularForm.ts"
+  import CindyCanvas from "./CindyCanvas.svelte"
+  import Switch from "./Switch.svelte"
 
   type Matrix = [[number, number], [number, number]]
 
@@ -147,11 +147,23 @@
       gain.gain.value = 0.05
       gain.connect(ac.destination)
       osc.connect(gain)
+      updatePeriodicWave(listenY)
       osc.start()
     } else if (osc) {
       osc.stop()
       osc.disconnect()
       osc = null
+    }
+  }
+
+  function updatePeriodicWave(listenY: number) {
+    if (osc && selectedMF.coefficients) {
+      let wave = ac.createPeriodicWave(
+        selectedMF.coefficients.map((x, n) => x * Math.exp(-2 * Math.PI * n * listenY)),
+        Array(selectedMF.coefficients.length).fill(0)
+      )
+      osc.frequency.value = listenFreq * (selectedMF.fourierScale ?? 1)
+      osc.setPeriodicWave(wave)
     }
   }
 
@@ -194,18 +206,7 @@
     )
   })
 
-  $effect(() => {
-    if (osc && selectedMF.coefficients) {
-      console.log("Hey")
-
-      let wave = ac.createPeriodicWave(
-        selectedMF.coefficients.map((x, n) => x * Math.exp(-2 * Math.PI * n * listenY)),
-        Array(selectedMF.coefficients.length).fill(0)
-      )
-      osc.frequency.value = listenFreq * (selectedMF.fourierScale ?? 1)
-      osc.setPeriodicWave(wave)
-    }
-  })
+  $effect(() => updatePeriodicWave(listenY))
 
   onMount(() => {
     setInterval(() => {
