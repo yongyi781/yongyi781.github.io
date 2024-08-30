@@ -90,8 +90,8 @@
         oscillatorType: "sine",
         oscillatorSnap: true,
         pauseOrResume: () => {
-          this.running = !this.running
-          pauseButton.name(this.running ? "Pause" : "Resume")
+          config.running = !config.running
+          pauseButton.name(config.running ? "Pause" : "Resume")
         },
         clear: () => {
           offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height)
