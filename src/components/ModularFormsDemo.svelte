@@ -357,7 +357,7 @@
           max={param.max ?? 100}
           step={param.step ?? 1}
           bind:value={params[i]}
-          on:change={() => {
+          onchange={() => {
             handleChange()
           }} /></label>
     {/each}
@@ -387,13 +387,13 @@
       </div>
       <div class="text-center">
         <button
-          on:click={() =>
+          onclick={() =>
             (mat = copy(selectedMF.mat) ?? [
               [0, -1],
               [1, 0]
             ])}>Default</button>
         <button
-          on:click={() =>
+          onclick={() =>
             (mat = [
               [1, 0],
               [0, 1]

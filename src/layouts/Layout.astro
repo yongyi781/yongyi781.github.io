@@ -1,16 +1,16 @@
 ---
 import BaseHead from "../components/BaseHead.astro"
-import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import Header from "../components/Header.astro"
 import { SITE_DESCRIPTION, SITE_TITLE } from "../consts"
 
 export interface Props {
   title?: string
   description?: string
-  maxWidth?: number
+  limitWidth?: boolean
   useKatex?: boolean
 }
-const { title = SITE_TITLE, description = SITE_DESCRIPTION, useKatex = false } = Astro.props
+const { title = SITE_TITLE, description = SITE_DESCRIPTION, limitWidth = true, useKatex = false } = Astro.props
 ---
 
 <html lang="en">
@@ -19,7 +19,7 @@ const { title = SITE_TITLE, description = SITE_DESCRIPTION, useKatex = false } =
   </head>
   <body class="min-h-screen flex flex-col bg-gradient-to-t from-slate-100 via-slate-50 to-slate-100">
     <Header />
-    <main class="p-10 max-w-4xl m-auto">
+    <main class=`p-10 my-auto ${limitWidth ? "mx-auto max-w-4xl" : ""}`>
       <slot />
     </main>
     <Footer />
