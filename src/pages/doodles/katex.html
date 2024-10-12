@@ -1,121 +1,118 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <!-- Copyright (c) 2012-2019 The MathJax Consortium -->
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>LaTeX Live Preview</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css"
-      integrity="sha384-3UiQGuEI4TTMaFmGIZumfRPtfKQ3trwQE2JgosJxCnGmQpL/lJdjpcHkaaFwHlcI"
-      crossorigin="anonymous" />
-    <style>
-      * {
-        box-sizing: border-box;
-      }
 
-      body {
-        font-family: system-ui, "Noto Sans", sans-serif;
-      }
+<head>
+  <!-- Copyright (c) 2012-2019 The MathJax Consortium -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>LaTeX Live Preview</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.css"
+    integrity="sha384-3UiQGuEI4TTMaFmGIZumfRPtfKQ3trwQE2JgosJxCnGmQpL/lJdjpcHkaaFwHlcI" crossorigin="anonymous" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-      textarea {
-        font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
-        border-radius: 5px;
-        padding: 0.5em;
-        border: 1px solid grey;
-        margin: 1em 0 0 0;
-        width: 100%;
-      }
+    body {
+      font-family: system-ui, "Noto Sans", sans-serif;
+    }
 
-      .container {
-        margin: 0 auto;
-        max-width: 768px;
-      }
+    textarea {
+      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+      border-radius: 5px;
+      padding: 0.5em;
+      border: 1px solid grey;
+      margin: 1em 0 0 0;
+      width: 100%;
+    }
 
-      #output {
-        margin-top: 0.75em;
-        border: 1px solid grey;
-        border-radius: 5px;
-        padding: 0.5em;
-        min-height: 2em;
-        white-space: pre-wrap;
-        overflow-wrap: break-word;
-      }
-    </style>
-  </head>
+    .container {
+      margin: 0 auto;
+      max-width: 768px;
+    }
 
-  <body>
-    <div class="container">
-      <h1>KaTeX Live Preview</h1>
-      <a href="/doodles/mathjax/">Switch to MathJax</a>
-      <textarea id="input" rows="15" spellcheck="false"></textarea>
-      <div id="output"></div>
-    </div>
+    #output {
+      margin-top: 0.75em;
+      border: 1px solid grey;
+      border-radius: 5px;
+      padding: 0.5em;
+      min-height: 2em;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+  </style>
+</head>
 
-    <!-- The loading of KaTeX is deferred to speed up page rendering -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.js"
-      integrity="sha384-G0zcxDFp5LWZtDuRMnBkk3EphCK1lhEf4UEyEM693ka574TZGwo4IWwS6QLzM/2t"
-      crossorigin="anonymous"></script>
+<body>
+  <div class="container">
+    <h1>KaTeX Live Preview</h1>
+    <a href="/doodles/mathjax/">Switch to MathJax</a>
+    <textarea id="input" rows="15" spellcheck="false"></textarea>
+    <div id="output"></div>
+  </div>
 
-    <!-- To automatically render math in text elements, include the auto-render extension: -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/contrib/auto-render.min.js"
-      integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
-      crossorigin="anonymous"
-      onload="renderMathInElement(document.body);"></script>
+  <!-- The loading of KaTeX is deferred to speed up page rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.js"
+    integrity="sha384-G0zcxDFp5LWZtDuRMnBkk3EphCK1lhEf4UEyEM693ka574TZGwo4IWwS6QLzM/2t"
+    crossorigin="anonymous"></script>
 
-    <script>
-      let urlParams = new URLSearchParams(window.location.search)
-      let mathbotStyleStr = urlParams.get("mathbot")
-      let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1"
+  <!-- To automatically render math in text elements, include the auto-render extension: -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
 
-      inlineChar = mathbotStyle ? "$$" : "$"
-      displayMath = [["\\[", "\\]"]]
-      if (!mathbotStyle) {
-        displayMath.push(["$$", "$$"])
-      }
+  <script>
+    let urlParams = new URLSearchParams(window.location.search)
+    let mathbotStyleStr = urlParams.get("mathbot")
+    let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1"
 
-      let macros = {}
+    inlineChar = mathbotStyle ? "$$" : "$"
+    displayMath = [["\\[", "\\]"]]
+    if (!mathbotStyle) {
+      displayMath.push(["$$", "$$"])
+    }
 
-      let lowercase = "abcdefghijklmnopqrstuvwxyz"
-      let uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      for (let c of uppercase) {
-        macros["\\b" + c] = "\\mathbb{" + c + "}"
-        macros["\\c" + c] = "\\mathcal{" + c + "}"
-      }
-      for (let c of lowercase + uppercase) {
-        macros["\\f" + c] = "\\mathfrak{" + c + "}"
-        macros["\\s" + c] = "\\mathscr{" + c + "}"
-      }
+    let macros = {}
 
-      var defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
+    let lowercase = "abcdefghijklmnopqrstuvwxyz"
+    let uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    for (let c of uppercase) {
+      macros["\\b" + c] = "\\mathbb{" + c + "}"
+      macros["\\c" + c] = "\\mathcal{" + c + "}"
+    }
+    for (let c of lowercase + uppercase) {
+      macros["\\f" + c] = "\\mathfrak{" + c + "}"
+      macros["\\s" + c] = "\\mathscr{" + c + "}"
+    }
 
-      function convert() {
-        let input = document.querySelector("#input").value.trim()
-        localStorage.setItem("content", input)
+    var defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
 
-        let output = document.querySelector("#output")
-        output.textContent = input
+    function convert() {
+      let input = document.querySelector("#input").value.trim()
+      localStorage.setItem("content", input)
 
-        renderMathInElement(output, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "\\[", right: "\\]", display: true }
-          ],
-          throwOnError: false,
-          macros,
-          globalGroup: true
-        })
-      }
+      let output = document.querySelector("#output")
+      output.textContent = input
 
-      document.querySelector("#input").addEventListener("keyup", convert)
-      document.querySelector("#input").value = localStorage.getItem("content") || defaultText
-      convert()
-    </script>
-  </body>
+      renderMathInElement(output, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true }
+        ],
+        throwOnError: false,
+        macros,
+        globalGroup: true
+      })
+    }
+
+    document.querySelector("#input").addEventListener("keyup", convert)
+    document.querySelector("#input").value = localStorage.getItem("content") || defaultText
+    convert()
+  </script>
+</body>
+
 </html>

@@ -1,256 +1,246 @@
 ﻿<!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>JavaScript Tone Generator</title>
-    <link
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-      crossorigin="anonymous" />
-    <style>
-      input[type="range"] {
-        width: 100%;
-      }
-    </style>
-  </head>
 
-  <body>
-    <div class="container">
-      <h1>JavaScript Tone Generator</h1>
-      <div>
-        <div class="form-group row">
-          <label class="col-sm-3 col-md-2">Ear:</label>
-          <div id="ear" class="col-sm-9 col-md-10">
-            <div class="form-check form-check-inline">
-              <label class="form-check-label">
-                <input id="leftEar" class="form-check-input" type="checkbox" checked />
-                Left
-              </label>
-            </div>
-            <div class="form-check form-check-inline">
-              <label class="form-check-label">
-                <input id="rightEar" class="form-check-input" type="checkbox" checked />
-                Right
-              </label>
-            </div>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <title>JavaScript Tone Generator</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+  <style>
+    input[type="range"] {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>JavaScript Tone Generator</h1>
+    <div>
+      <div class="form-group row">
+        <label class="col-sm-3 col-md-2">Ear:</label>
+        <div id="ear" class="col-sm-9 col-md-10">
+          <div class="form-check form-check-inline">
+            <label class="form-check-label">
+              <input id="leftEar" class="form-check-input" type="checkbox" checked />
+              Left
+            </label>
           </div>
-        </div>
-        <div class="form-group row">
-          <label class="col-sm-3 col-md-2 col-form-label">Wave type:</label>
-          <div class="col-sm-9 col-md-10">
-            <input id="waveType" type="text" class="form-control" value="sine" />
-          </div>
-        </div>
-        <div class="form-group row">
-          <label class="col-sm-3 col-md-2 col-form-label" for="frequencyInput">Frequency (Hz):</label>
-          <div id="frequency" class="col-sm-9 col-md-10">
-            <div class="form-row">
-              <div class="col-sm-3 col-md-2">
-                <input type="number" id="frequencyInput" class="form-control" value="880" min="1" max="22050" />
-              </div>
-              <div class="col-sm-9 col-md-8">
-                <button class="btn btn-secondary" data-semitones="-1">-1</button>
-                <button class="btn btn-secondary" data-semitones="1">+1</button>
-                <button class="btn btn-secondary" data-semitones="-12">-12</button>
-                <button class="btn btn-secondary" data-semitones="12">+12</button>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="col-sm-3 col-md-2">
-                <input type="number" id="minFrequency" class="form-control" value="20" min="1" max="22050" />
-              </div>
-              <div class="col-sm-6 col-md-8">
-                <input
-                  type="range"
-                  id="frequencySlider"
-                  class="form-control"
-                  value="0.540187"
-                  min="0"
-                  max="1"
-                  step="0.000001" />
-              </div>
-              <div class="col-sm-3 col-md-2">
-                <input type="number" id="maxFrequency" class="form-control" value="22050" min="1" max="22050" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="form-group row">
-          <label class="col-sm-3 col-md-2 col-form-label" for="volumeInput">Volume (dB):</label>
-          <div id="volume" class="col-sm-9 col-md-10">
-            <input type="number" id="volumeInput" class="form-control" value="-25" min="-100" max="0" />
-            <input type="range" id="volumeSlider" value="-25" min="-100" max="0" step="0.01" />
-          </div>
-        </div>
-        <div class="form-group row">
-          <label class="col-sm-3 col-md-2 col-form-label" for="volumeInput">Modulation index:</label>
-          <div id="modIndex" class="col-sm-9 col-md-10">
-            <input type="number" id="modIndexInput" class="form-control" value="0.05946" min="0" max="1" />
-            <input type="range" id="modIndexSlider" value="0.05946" min="0" max="1" step="0.001" />
-          </div>
-        </div>
-        <div class="form-group row">
-          <label class="col-sm-3 col-md-2 col-form-label" for="volumeInput">Modulation frequency:</label>
-          <div id="modFreq" class="col-sm-9 col-md-10">
-            <input type="number" id="modFreqInput" class="form-control" value="0" min="0" max="10" />
-            <input type="range" id="modFreqSlider" value="0" min="0" max="20" step="0.1" />
-          </div>
-        </div>
-        <div class="form-group row">
-          <div class="col-md-offset-2 col-sm-offset-3 col-sm-9 col-md-10">
-            <button class="btn btn-lg btn-primary" id="play">Start</button>
+          <div class="form-check form-check-inline">
+            <label class="form-check-label">
+              <input id="rightEar" class="form-check-input" type="checkbox" checked />
+              Right
+            </label>
           </div>
         </div>
       </div>
+      <div class="form-group row">
+        <label class="col-sm-3 col-md-2 col-form-label">Wave type:</label>
+        <div class="col-sm-9 col-md-10">
+          <input id="waveType" type="text" class="form-control" value="sine" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-sm-3 col-md-2 col-form-label" for="frequencyInput">Frequency (Hz):</label>
+        <div id="frequency" class="col-sm-9 col-md-10">
+          <div class="form-row">
+            <div class="col-sm-3 col-md-2">
+              <input type="number" id="frequencyInput" class="form-control" value="880" min="1" max="22050" />
+            </div>
+            <div class="col-sm-9 col-md-8">
+              <button class="btn btn-secondary" data-semitones="-1">-1</button>
+              <button class="btn btn-secondary" data-semitones="1">+1</button>
+              <button class="btn btn-secondary" data-semitones="-12">-12</button>
+              <button class="btn btn-secondary" data-semitones="12">+12</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="col-sm-3 col-md-2">
+              <input type="number" id="minFrequency" class="form-control" value="20" min="1" max="22050" />
+            </div>
+            <div class="col-sm-6 col-md-8">
+              <input type="range" id="frequencySlider" class="form-control" value="0.540187" min="0" max="1"
+                step="0.000001" />
+            </div>
+            <div class="col-sm-3 col-md-2">
+              <input type="number" id="maxFrequency" class="form-control" value="22050" min="1" max="22050" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-sm-3 col-md-2 col-form-label" for="volumeInput">Volume (dB):</label>
+        <div id="volume" class="col-sm-9 col-md-10">
+          <input type="number" id="volumeInput" class="form-control" value="-25" min="-100" max="0" />
+          <input type="range" id="volumeSlider" value="-25" min="-100" max="0" step="0.01" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-sm-3 col-md-2 col-form-label" for="volumeInput">Modulation index:</label>
+        <div id="modIndex" class="col-sm-9 col-md-10">
+          <input type="number" id="modIndexInput" class="form-control" value="0.05946" min="0" max="1" />
+          <input type="range" id="modIndexSlider" value="0.05946" min="0" max="1" step="0.001" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-sm-3 col-md-2 col-form-label" for="volumeInput">Modulation frequency:</label>
+        <div id="modFreq" class="col-sm-9 col-md-10">
+          <input type="number" id="modFreqInput" class="form-control" value="0" min="0" max="10" />
+          <input type="range" id="modFreqSlider" value="0" min="0" max="20" step="0.1" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-offset-2 col-sm-offset-3 col-sm-9 col-md-10">
+          <button class="btn btn-lg btn-primary" id="play">Start</button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script
-      src="https://code.jquery.com/jquery-3.4.1.min.js"
-      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-      crossorigin="anonymous"></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/tone/13.8.25/Tone.js"
-      integrity="sha256-RvvCPB+AX/5sltBUtzLs7u+XkRBrVExi9njthRa76LU="
-      crossorigin="anonymous"></script>
-    <script>
-      var rampTime = 0.01
-      var synth, merge
-      var isPlaying = false
-      var minFrequency = +$("#minFrequency").val(),
-        maxFrequency = +$("#maxFrequency").val()
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+    integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/13.8.25/Tone.js"
+    integrity="sha256-RvvCPB+AX/5sltBUtzLs7u+XkRBrVExi9njthRa76LU=" crossorigin="anonymous"></script>
+  <script>
+    var rampTime = 0.01
+    var synth, merge
+    var isPlaying = false
+    var minFrequency = +$("#minFrequency").val(),
+      maxFrequency = +$("#maxFrequency").val()
 
-      function updateSynthPan() {
-        //synth.disconnect(merge);
-        synth.disconnect()
-        if ($("#leftEar").prop("checked")) synth.connect(merge.left)
-        if ($("#rightEar").prop("checked")) synth.connect(merge.right)
-      }
+    function updateSynthPan() {
+      //synth.disconnect(merge);
+      synth.disconnect()
+      if ($("#leftEar").prop("checked")) synth.connect(merge.left)
+      if ($("#rightEar").prop("checked")) synth.connect(merge.right)
+    }
 
-      function init() {
-        if (synth != null) return
+    function init() {
+      if (synth != null) return
 
-        synth = new Tone.Synth({
-          oscillator: { type: "fmsine", modulationType: "sine", modulationIndex: 0.05946 },
-          envelope: {
-            attack: rampTime,
-            attackCurve: "sine",
-            decay: 0,
-            sustain: 1,
-            release: rampTime,
-            releaseCurve: "sine"
-          }
-        })
-        synth.volume.value = $("#volumeInput").val()
-        synth.frequency.value = $("#frequencyInput").val()
-        merge = new Tone.Merge().toMaster()
-        updateSynthPan()
-      }
-
-      /**
-       * Maps a linear value between 0 and 1 to a value logarithmically spaced between min and max.
-       */
-      function linearToLog(min, max, t) {
-        return Math.pow(min, 1 - t) * Math.pow(max, t)
-      }
-
-      /**
-       * Maps a value between min a max to a linear value between 0 and 1.
-       */
-      function logToLinear(min, max, value) {
-        return Math.log(value / min) / Math.log(max / min)
-      }
-
-      function updateFrequencySlider() {
-        $("#frequencySlider").val(logToLinear(minFrequency, maxFrequency, +$("#frequencyInput").val()))
-      }
-
-      var $frequencyControls = $("#frequencyInput, #frequencySlider")
-
-      $("#ear input").change(function () {
-        if (synth != null) updateSynthPan()
-      })
-
-      $("#waveType").change(function () {
-        if (synth != null) synth.oscillator.type = $(this).val()
-      })
-
-      $frequencyControls.on("input change", function () {
-        var value = +$(this).val()
-        if (this === document.querySelector("#frequencySlider")) {
-          value = linearToLog(minFrequency, maxFrequency, value)
-          $("#frequencyInput").val(value)
-        } else {
-          updateFrequencySlider()
-        }
-        if (synth != null) {
-          synth.frequency.value = value
-          synth.oscillator.harmonicity.value = $("#modFreqSlider").val() / value
+      synth = new Tone.Synth({
+        oscillator: { type: "fmsine", modulationType: "sine", modulationIndex: 0.05946 },
+        envelope: {
+          attack: rampTime,
+          attackCurve: "sine",
+          decay: 0,
+          sustain: 1,
+          release: rampTime,
+          releaseCurve: "sine"
         }
       })
+      synth.volume.value = $("#volumeInput").val()
+      synth.frequency.value = $("#frequencyInput").val()
+      merge = new Tone.Merge().toMaster()
+      updateSynthPan()
+    }
 
-      $("#minFrequency").change(function () {
-        minFrequency = +$(this).val()
+    /**
+     * Maps a linear value between 0 and 1 to a value logarithmically spaced between min and max.
+     */
+    function linearToLog(min, max, t) {
+      return Math.pow(min, 1 - t) * Math.pow(max, t)
+    }
+
+    /**
+     * Maps a value between min a max to a linear value between 0 and 1.
+     */
+    function logToLinear(min, max, value) {
+      return Math.log(value / min) / Math.log(max / min)
+    }
+
+    function updateFrequencySlider() {
+      $("#frequencySlider").val(logToLinear(minFrequency, maxFrequency, +$("#frequencyInput").val()))
+    }
+
+    var $frequencyControls = $("#frequencyInput, #frequencySlider")
+
+    $("#ear input").change(function () {
+      if (synth != null) updateSynthPan()
+    })
+
+    $("#waveType").change(function () {
+      if (synth != null) synth.oscillator.type = $(this).val()
+    })
+
+    $frequencyControls.on("input change", function () {
+      var value = +$(this).val()
+      if (this === document.querySelector("#frequencySlider")) {
+        value = linearToLog(minFrequency, maxFrequency, value)
+        $("#frequencyInput").val(value)
+      } else {
         updateFrequencySlider()
-      })
+      }
+      if (synth != null) {
+        synth.frequency.value = value
+        synth.oscillator.harmonicity.value = $("#modFreqSlider").val() / value
+      }
+    })
 
-      $("#maxFrequency").change(function () {
-        maxFrequency = +$(this).val()
-        updateFrequencySlider()
-      })
-
-      $("#volume input").on("input change", function () {
-        var value = $(this).val()
-        if (synth != null) synth.volume.value = $(this).val()
-        $("#volume input").not(this).val(value)
-      })
-
-      $("#modIndex input").on("input change", function () {
-        var value = $(this).val()
-        if (synth != null) synth.oscillator.modulationIndex.value = $(this).val()
-        $("#modIndex input").not(this).val(value)
-      })
-
-      $("#modFreq input").on("input change", function () {
-        var value = $(this).val()
-        if (synth != null) synth.oscillator.harmonicity.value = value / synth.oscillator.frequency.value
-        $("#modFreq input").not(this).val(value)
-      })
-
-      $("#frequency button").click(function () {
-        var currentFreq = +$("#frequencyInput").val()
-        var newFreq = currentFreq * Math.pow(2, +$(this).data("semitones") / 12)
-        if (synth != null) {
-          synth.frequency.value = newFreq
-          synth.oscillator.harmonicity.value = $("#modFreqSlider").val() / newFreq
-        }
-        $("#frequencyInput").val(newFreq)
-        updateFrequencySlider()
-      })
-
-      $("#play").click(function () {
-        init()
-
-        if (isPlaying) {
-          isPlaying = false
-          synth.triggerRelease()
-          $(this).text("Start")
-        } else {
-          isPlaying = true
-          synth.triggerAttack(synth.frequency.value)
-          $(this).text("Stop")
-        }
-      })
-
-      $(document).keydown(function (e) {
-        if (e.key === "Enter" || e.key === "Return" || e.key === " ") {
-          e.preventDefault()
-          $("#play").click()
-        }
-      })
-
+    $("#minFrequency").change(function () {
+      minFrequency = +$(this).val()
       updateFrequencySlider()
-    </script>
-  </body>
+    })
+
+    $("#maxFrequency").change(function () {
+      maxFrequency = +$(this).val()
+      updateFrequencySlider()
+    })
+
+    $("#volume input").on("input change", function () {
+      var value = $(this).val()
+      if (synth != null) synth.volume.value = $(this).val()
+      $("#volume input").not(this).val(value)
+    })
+
+    $("#modIndex input").on("input change", function () {
+      var value = $(this).val()
+      if (synth != null) synth.oscillator.modulationIndex.value = $(this).val()
+      $("#modIndex input").not(this).val(value)
+    })
+
+    $("#modFreq input").on("input change", function () {
+      var value = $(this).val()
+      if (synth != null) synth.oscillator.harmonicity.value = value / synth.oscillator.frequency.value
+      $("#modFreq input").not(this).val(value)
+    })
+
+    $("#frequency button").click(function () {
+      var currentFreq = +$("#frequencyInput").val()
+      var newFreq = currentFreq * Math.pow(2, +$(this).data("semitones") / 12)
+      if (synth != null) {
+        synth.frequency.value = newFreq
+        synth.oscillator.harmonicity.value = $("#modFreqSlider").val() / newFreq
+      }
+      $("#frequencyInput").val(newFreq)
+      updateFrequencySlider()
+    })
+
+    $("#play").click(function () {
+      init()
+
+      if (isPlaying) {
+        isPlaying = false
+        synth.triggerRelease()
+        $(this).text("Start")
+      } else {
+        isPlaying = true
+        synth.triggerAttack(synth.frequency.value)
+        $(this).text("Stop")
+      }
+    })
+
+    $(document).keydown(function (e) {
+      if (e.key === "Enter" || e.key === "Return" || e.key === " ") {
+        e.preventDefault()
+        $("#play").click()
+      }
+    })
+
+    updateFrequencySlider()
+  </script>
+</body>
+
 </html>
