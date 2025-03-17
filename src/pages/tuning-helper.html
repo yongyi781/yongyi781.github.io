@@ -15,7 +15,7 @@
     <div class="flex items-center mb-2">
       <label for="globalTuning" class="mr-2 font-medium">Global Tuning (cents):</label>
       <input type="number" step="0.1" v-model="globalTuning" class="border rounded p-1 w-20">
-      <span class="ml-2">A4 = {{ (440 * Math.pow(2, globalTuning / 1200)).toFixed(2) }} Hz</span>
+      <span class="ml-2">A4 = {{ (440 * Math.pow(2, globalTuning / 1200)).toPrecision(2) }} Hz</span>
     </div>
 
     <h2 class="text-xl font-bold mb-2">Pick a note:</h2>
@@ -29,7 +29,7 @@
 
     <div class="mt-2 border p-2 rounded">
       <div v-if="selectedNote !== null">
-        <span class="font-bold">{{ names[selectedNote] }} = {{ freq.toFixed(2)}} Hz</span>
+        <div class="font-bold">{{ names[selectedNote] }} = {{ freq.toFixed(2)}} Hz</div>
         <table class="table-auto mx-auto text-center border border-collapse border-gray-300">
           <thead class="bg-gray-200">
             <tr>
@@ -150,13 +150,13 @@
           const sign = Math.sign(semitones) * Math.sign(f);
           const dir = sign < 0 ? "narrow" : "wide";
           const bpm = Math.abs(f) * 60;
-          return `${Math.abs(f).toFixed(3)} Hz ${dir} | ${bpm.toFixed()} bpm | half = ${(bpm / 2).toFixed()} bpm`;
+          return `${Math.abs(f).toPrecision(3)} Hz ${dir} | ${bpm.toFixed()} bpm | half = ${(bpm / 2).toFixed()} bpm`;
         }
 
         function beatPeriodStr(semitones, mult1, mult2) {
           const f = beatFrequency(semitones, mult1, mult2);
           const p = 1 / Math.abs(f);
-          return `${p.toFixed(3)} s`;
+          return `${p.toPrecision(3)} s`;
         }
 
         return {
