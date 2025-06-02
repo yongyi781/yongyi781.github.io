@@ -1,118 +1,122 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <!-- Copyright (c) 2012-2019 The MathJax Consortium -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>LaTeX Live Preview</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"
+      integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-<head>
-  <!-- Copyright (c) 2012-2019 The MathJax Consortium -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  <title>LaTeX Live Preview</title>
-  <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"
-    integrity="sha512-fHwaWebuwA7NSF5Qg/af4UeDx9XqUpYpOGgubo3yWu+b2IQR4UeQwbb42Ti7gVAjNtVoI/I9TEoYeu9omwcC6g=="
-    crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+      body {
+        font-family: "Noto Sans", system-ui, sans-serif;
+        margin: 0;
+      }
 
-    body {
-      font-family: "Noto Sans", system-ui, sans-serif;
-      margin: 0;
-    }
+      #input {
+        font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
+        padding: 0.5em;
+        border: 1px solid grey;
+        width: 50%;
+        height: 100vh;
+        resize: none;
+      }
 
-    #input {
-      font-family: "Cascadia Code", "Fira Mono", Consolas, monospace;
-      padding: 0.5em;
-      border: 1px solid grey;
-      width: 50%;
-      height: 100vh;
-      resize: none;
-    }
+      .container {
+        display: flex;
+        justify-content: space-between;
+      }
 
-    .container {
-      display: flex;
-      justify-content: space-between;
-    }
+      #output {
+        width: 50%;
+        padding: 0.5em;
+        border: 1px solid grey;
+        border-radius: 5px;
+        min-height: 2em;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+      }
+    </style>
+  </head>
 
-    #output {
-      width: 50%;
-      padding: 0.5em;
-      border: 1px solid grey;
-      border-radius: 5px;
-      min-height: 2em;
-      white-space: pre-wrap;
-      overflow-wrap: break-word;
-    }
-  </style>
-</head>
+  <body>
+    <div class="container">
+      <textarea id="input" rows="15" spellcheck="false"></textarea>
+      <div id="output"></div>
+    </div>
 
-<body>
-  <div class="container">
-    <textarea id="input" rows="15" spellcheck="false"></textarea>
-    <div id="output"></div>
-  </div>
+    <!-- The loading of KaTeX is deferred to speed up page rendering -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.js"
+      integrity="sha384-G0zcxDFp5LWZtDuRMnBkk3EphCK1lhEf4UEyEM693ka574TZGwo4IWwS6QLzM/2t"
+      crossorigin="anonymous"></script>
 
-  <!-- The loading of KaTeX is deferred to speed up page rendering -->
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/katex.min.js"
-    integrity="sha384-G0zcxDFp5LWZtDuRMnBkk3EphCK1lhEf4UEyEM693ka574TZGwo4IWwS6QLzM/2t"
-    crossorigin="anonymous"></script>
+    <!-- To automatically render math in text elements, include the auto-render extension: -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/contrib/auto-render.min.js"
+      integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+      crossorigin="anonymous"
+      onload="renderMathInElement(document.body);"></script>
 
-  <!-- To automatically render math in text elements, include the auto-render extension: -->
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.7/dist/contrib/auto-render.min.js"
-    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
-    onload="renderMathInElement(document.body);"></script>
+    <script>
+      let urlParams = new URLSearchParams(window.location.search)
+      let mathbotStyleStr = urlParams.get("mathbot")
+      let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1"
 
-  <script>
-    let urlParams = new URLSearchParams(window.location.search)
-    let mathbotStyleStr = urlParams.get("mathbot")
-    let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1"
+      inlineChar = mathbotStyle ? "$$" : "$"
+      displayMath = [["\\[", "\\]"]]
+      if (!mathbotStyle) {
+        displayMath.push(["$$", "$$"])
+      }
 
-    inlineChar = mathbotStyle ? "$$" : "$"
-    displayMath = [["\\[", "\\]"]]
-    if (!mathbotStyle) {
-      displayMath.push(["$$", "$$"])
-    }
+      let macros = {}
 
-    let macros = {}
+      let lowercase = "abcdefghijklmnopqrstuvwxyz"
+      let uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      for (let c of uppercase) {
+        macros["\\b" + c] = "\\mathbb{" + c + "}"
+        macros["\\c" + c] = "\\mathcal{" + c + "}"
+      }
+      for (let c of lowercase + uppercase) {
+        macros["\\f" + c] = "\\mathfrak{" + c + "}"
+        macros["\\s" + c] = "\\mathscr{" + c + "}"
+      }
 
-    let lowercase = "abcdefghijklmnopqrstuvwxyz"
-    let uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    for (let c of uppercase) {
-      macros["\\b" + c] = "\\mathbb{" + c + "}"
-      macros["\\c" + c] = "\\mathcal{" + c + "}"
-    }
-    for (let c of lowercase + uppercase) {
-      macros["\\f" + c] = "\\mathfrak{" + c + "}"
-      macros["\\s" + c] = "\\mathscr{" + c + "}"
-    }
+      var defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
 
-    var defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
+      function convert() {
+        let input = document.querySelector("#input").value.trim()
+        localStorage.setItem("content", input)
 
-    function convert() {
-      let input = document.querySelector("#input").value.trim()
-      localStorage.setItem("content", input)
+        let output = document.querySelector("#output")
+        output.textContent = input
 
-      let output = document.querySelector("#output")
-      output.textContent = input
+        renderMathInElement(output, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true }
+          ],
+          throwOnError: false,
+          macros,
+          globalGroup: true
+        })
+      }
 
-      renderMathInElement(output, {
-        delimiters: [
-          { left: "$$", right: "$$", display: true },
-          { left: "$", right: "$", display: false },
-          { left: "\\(", right: "\\)", display: false },
-          { left: "\\[", right: "\\]", display: true }
-        ],
-        throwOnError: false,
-        macros,
-        globalGroup: true
-      })
-    }
-
-    document.querySelector("#input").addEventListener("keyup", convert)
-    document.querySelector("#input").value = localStorage.getItem("content") || defaultText
-    convert()
-  </script>
-</body>
-
+      document.querySelector("#input").addEventListener("keyup", convert)
+      document.querySelector("#input").value = localStorage.getItem("content") || defaultText
+      convert()
+    </script>
+  </body>
 </html>
