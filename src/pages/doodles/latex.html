@@ -22,6 +22,7 @@
         width: 50%;
         height: 100%;
         padding: 1em;
+        line-height: 1.5em;
         overflow-y: auto;
         background-color: #fafafa;
         white-space: pre-wrap;
@@ -29,6 +30,8 @@
       }
     </style>
     <link rel="stylesheet" href="/css/Temml-Latin-Modern.css" />
+    <script src="/js/Temml/temml.min.js"></script>
+    <script src="/js/Temml/copy-tex.min.js"></script>
   </head>
 
   <body>
@@ -36,7 +39,6 @@
     <div id="preview"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
-    <script src="/js/Temml/temml.min.js"></script>
 
     <script>
       const defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
@@ -82,7 +84,7 @@
           preview.textContent = input
 
           localStorage.setItem("content", input)
-          temml.renderMathInElement(preview, { fences: "all" })
+          temml.renderMathInElement(preview, { fences: "all", annotate: true })
         }
 
         editor.onDidChangeModelContent(renderPreview)
