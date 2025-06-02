@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live LaTeX Preview Editor</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+        font-family: sans-serif;
+      }
+
+      #editor {
+        width: 50%;
+        height: 100%;
+      }
+
+      #preview {
+        width: 50%;
+        height: 100%;
+        padding: 1em;
+        overflow-y: auto;
+        background-color: #fafafa;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+      }
+    </style>
+    <link rel="stylesheet" href="/css/Temml-Latin-Modern.css" />
+  </head>
+
+  <body>
+    <div id="editor"></div>
+    <div id="preview"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <script src="/js/Temml/temml.min.js"></script>
+
+    <script>
+      const defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
+      window.require.config({
+        paths: {
+          vs: "https://unpkg.com/monaco-editor@0.45.0/min/vs"
+        }
+      })
+
+      window.require(["vs/editor/editor.main"], () => {
+        monaco.languages.register({ id: "latex" })
+
+        monaco.languages.setMonarchTokensProvider("latex", {
+          tokenizer: {
+            root: [
+              [/\\[a-zA-Z@]+/, "keyword"], // commands
+              [/\$[^$]*\$/, "math"], // inline math
+              [/\$\$[^$]*\$\$/, "math"], // display math
+              [/\\\[[^$]*\\\]/, "math"], // display math
+              [/\%.*$/, "comment"] // comments
+            ]
+          }
+        })
+
+        monaco.editor.defineTheme("latex-theme", {
+          base: "vs-dark",
+          colors: [],
+          inherit: true,
+          rules: [{ token: "math", foreground: "4bbfb0" }]
+        })
+
+        const editor = monaco.editor.create(document.getElementById("editor"), {
+          value: localStorage.getItem("content") || defaultText,
+          language: "latex",
+          theme: "latex-theme",
+          automaticLayout: true,
+          wordWrap: "on"
+        })
+
+        function renderPreview() {
+          const input = editor.getValue()
+          const preview = document.getElementById("preview")
+          preview.textContent = input
+
+          localStorage.setItem("content", input)
+          temml.renderMathInElement(preview, { fences: "all" })
+        }
+
+        editor.onDidChangeModelContent(renderPreview)
+        renderPreview()
+        editor.focus()
+      })
+    </script>
+  </body>
+</html>
