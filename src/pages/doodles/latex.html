@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live LaTeX Preview Editor</title>
+    <title>Live LaTeX Editor</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <style>
       body {
         margin: 0;
@@ -42,32 +43,32 @@
 
     <script>
       const defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
-      window.require.config({
+      const latexMonarchLanguage = {
+        tokenizer: {
+          root: [
+            [/%.*/, "comment"],
+            [/\\[a-zA-Z@]+[*]?/, "keyword"],
+            [/\$[^$]*\$/, "math"], // Inline math
+            [/\\\[[^\]]*\\\]/, "math"], // Display math
+            [/\\\([^\)]*\\\)/, "math"] // Inline math with \( \)
+          ]
+        }
+      }
+
+      require.config({
         paths: {
-          vs: "https://unpkg.com/monaco-editor@0.45.0/min/vs"
+          vs: "https://unpkg.com/monaco-editor/min/vs"
         }
       })
 
-      window.require(["vs/editor/editor.main"], () => {
+      require(["vs/editor/editor.main"], () => {
         monaco.languages.register({ id: "latex" })
-
-        monaco.languages.setMonarchTokensProvider("latex", {
-          tokenizer: {
-            root: [
-              [/\\[a-zA-Z@]+/, "keyword"], // commands
-              [/\$[^$]*\$/, "math"], // inline math
-              [/\$\$[^$]*\$\$/, "math"], // display math
-              [/\\\[[^$]*\\\]/, "math"], // display math
-              [/\%.*$/, "comment"] // comments
-            ]
-          }
-        })
-
+        monaco.languages.setMonarchTokensProvider("latex", latexMonarchLanguage)
         monaco.editor.defineTheme("latex-theme", {
           base: "vs-dark",
           colors: [],
           inherit: true,
-          rules: [{ token: "math", foreground: "4bbfb0" }]
+          rules: [{ token: "math", foreground: "4ec9b0" }]
         })
 
         const editor = monaco.editor.create(document.getElementById("editor"), {
@@ -75,7 +76,8 @@
           language: "latex",
           theme: "latex-theme",
           automaticLayout: true,
-          wordWrap: "on"
+          wordWrap: "on",
+          minimap: { enabled: false }
         })
 
         function renderPreview() {
@@ -88,8 +90,8 @@
         }
 
         editor.onDidChangeModelContent(renderPreview)
-        renderPreview()
         editor.focus()
+        renderPreview()
       })
     </script>
   </body>
