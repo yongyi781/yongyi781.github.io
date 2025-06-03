@@ -44,6 +44,8 @@
     <script>
       const defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
       const latexMonarchLanguage = {
+        tabSize: 2,
+
         tokenizer: {
           root: [
             [/%.*/, "comment"],
@@ -77,6 +79,7 @@
           theme: "latex-theme",
           automaticLayout: true,
           wordWrap: "on",
+          tabSize: 2,
           minimap: { enabled: false }
         })
 
@@ -84,8 +87,8 @@
           const input = editor.getValue()
           const preview = document.getElementById("preview")
           preview.textContent = input
-
           localStorage.setItem("content", input)
+
           temml.renderMathInElement(preview, { fences: "all", annotate: true })
         }
 
