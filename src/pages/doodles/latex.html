@@ -44,8 +44,6 @@
     <script>
       const defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
       const latexMonarchLanguage = {
-        tabSize: 2,
-
         tokenizer: {
           root: [
             [/%.*/, "comment"],
@@ -66,6 +64,29 @@
       require(["vs/editor/editor.main"], () => {
         monaco.languages.register({ id: "latex" })
         monaco.languages.setMonarchTokensProvider("latex", latexMonarchLanguage)
+        monaco.languages.setLanguageConfiguration("latex", {
+          brackets: [
+            ["(", ")"],
+            ["{", "}"],
+            ["\\[", "\\]"]
+          ],
+          autoClosingPairs: [
+            { open: "{", close: "}" },
+            { open: "\\[", close: "\\]" },
+            { open: "(", close: ")" },
+            { open: "[", close: "]" },
+            { open: '"', close: '"', notIn: ["string"] },
+            { open: "'", close: "'", notIn: ["string", "comment"] }
+          ],
+          surroundingPairs: [
+            { open: "{", close: "}" },
+            { open: "(", close: ")" },
+            { open: "[", close: "]" },
+            { open: '"', close: '"' },
+            { open: "`", close: "'" }
+          ]
+        })
+
         monaco.editor.defineTheme("latex-theme", {
           base: "vs-dark",
           colors: [],
