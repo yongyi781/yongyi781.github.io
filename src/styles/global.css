@@ -3,20 +3,36 @@
   https://github.com/HermanMartinus/bearblog/blob/297026a877bc2ab2b3bdfbd6b9f7961c350917dd/templates/styles/blog/default.css
   License MIT: https://github.com/HermanMartinus/bearblog/blob/master/LICENSE.md
  */
+/*
+@import "tailwindcss/theme" layer(theme);
 
-@tailwind base;
+@import "tailwindcss/preflight" layer(base);
+
+@layer base {
+}*/
+
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --accent: #1e658f;
   --accent-color: #1e658f;
 }
 
-@layer base {
-  input:not([type]),
-  input[type="text"],
-  input[type="number"],
-  textarea,
-  select {
-    @apply rounded-sm py-0.5 px-1 border border-blue-300 transition-shadow duration-200 focus:outline-none focus:shadow-[0_0_10px_#9ecaed];
-  }
+input:not([type]),
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  @apply rounded-sm py-0.5 px-1 border border-blue-300 transition-shadow duration-200 focus:outline-none focus:shadow-[0_0_10px_#9ecaed];
+}
+
+input,
+textarea,
+select {
+  background: field;
+}
+
+hr {
+  border-color: #e5e7eb;
 }

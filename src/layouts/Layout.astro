@@ -17,7 +17,7 @@ const { title = SITE_TITLE, description = SITE_DESCRIPTION, limitWidth = true, u
   <head>
     <BaseHead {title} {description} {useKatex} />
   </head>
-  <body class="min-h-screen flex flex-col bg-gradient-to-t from-slate-100 via-slate-50 to-slate-100">
+  <body class="min-h-screen flex flex-col bg-linear-to-t from-slate-100 via-slate-50 to-slate-100">
     <Header />
     <main class=`p-10 my-auto ${limitWidth ? "mx-auto max-w-4xl" : ""}`>
       <slot />
