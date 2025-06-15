@@ -344,9 +344,18 @@
         {/each}
       </select>
     </label>
-    <label>Terms: <input type="number" min="1" max="100" class="w-20" bind:value={numTerms} /></label>
-    <label>Level: <input type="number" min="1" max="100" class="w-20" bind:value={level} /></label>
-    <label>Weight: <input type="number" min="-100" max="100" step="0.5" class="w-20" bind:value={weight} /></label>
+    <label
+      >Terms: <input type="number" min="1" max="100" class="w-20" autocomplete="off" bind:value={numTerms} /></label>
+    <label>Level: <input type="number" min="1" max="100" class="w-20" autocomplete="off" bind:value={level} /></label>
+    <label
+      >Weight: <input
+        type="number"
+        min="-100"
+        max="100"
+        step="0.5"
+        class="w-20"
+        autocomplete="off"
+        bind:value={weight} /></label>
     {#each modularForms[selectedModularFormIndex].params ?? [] as param, i}
       <label
         >{@html param.name}:
@@ -356,6 +365,7 @@
           min={param.min ?? -100}
           max={param.max ?? 100}
           step={param.step ?? 1}
+          autocomplete="off"
           bind:value={params[i]}
           onchange={() => {
             handleChange()
@@ -367,8 +377,13 @@
       <div class="grid grid-cols-[1fr_60px]">
         Upper half plane <Switch bind:checked={upperHalfPlane} />
         Transform <Switch bind:checked={transform} />
-        <span>Rotation</span><input type="number" min="0" max="12" bind:value={rot} />
-        <span>Brightness scale</span><input type="number" min="1" max="20" bind:value={brightnessScale} />
+        <span>Rotation</span><input type="number" min="0" max="12" autocomplete="off" bind:value={rot} />
+        <span>Brightness scale</span><input
+          type="number"
+          min="1"
+          max="20"
+          autocomplete="off"
+          bind:value={brightnessScale} />
         {#if selectedMF.coefficients}
           Listen <Switch bind:checked={listen} on:change={handleListenChange} />
           <input type="range" class="col-span-2" min="20" max="2000" step="0.001" bind:value={listenFreq} />
@@ -379,7 +394,7 @@
         <div class="grid grid-cols-2 w-auto">
           {#each Array(2) as _, i}
             {#each Array(2) as _, j}
-              <input type="number" class="w-[60px]" bind:value={mat[i][j]} />
+              <input type="number" class="w-[60px]" autocomplete="off" bind:value={mat[i][j]} />
             {/each}
           {/each}
         </div>
