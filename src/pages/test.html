@@ -1,13 +1,18 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>Document</title>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/png" href="/favicon.png" />
-  <title>Document</title>
-</head>
+  <body>
+    <script type="module">
+      import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm"
 
-<body></body>
-
+      const gui = new GUI()
+      gui.add({ a: 1 }, "a")
+    </script>
+  </body>
 </html>

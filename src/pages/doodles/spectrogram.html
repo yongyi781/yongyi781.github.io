@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <style>
       * {
-        font-family: "Open Sans", "Lucida Grande", Verdana, sans-serif;
+        font-family: "Noto Sans", "Lucida Grande", Verdana, sans-serif;
       }
 
       html,
@@ -43,23 +43,22 @@
     <div id="message"></div>
 
     <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"
-      integrity="sha512-WoO4Ih0CDOSLYafy22wZD/mcJ7k0ESLqtQsFa6zFKnEUrbtuGU+GkLtVhgt93xa2qewG5gKEC6CWlN8OaCTSVg=="
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"></script>
-    <script
       src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"
       integrity="sha512-zInFF17qBFVvvvFpIfeBzo7Tj7+rQxLeTJDmbxjBz5/zIr89YVbTNelNhdTT+/DCrxoVzBeUPVFJsczKbB7sew=="
       crossorigin="anonymous"
       referrerpolicy="no-referrer"></script>
-    <script>
+    <script type="module">
+      import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm"
+
       const canvas = document.querySelector("canvas")
       const offCanvas = document.createElement("canvas")
       const ctx = canvas.getContext("2d", { willReadFrequently: true })
       const offCtx = offCanvas.getContext("2d")
       const message = document.querySelector("#message")
       const C0 = 440 / Math.pow(2, 4 + 9 / 12)
-      let stream, source
+      /** @type MediaStream */
+      let stream
+      let source
       /** @type AnalyserNode */
       let analyser
       /** @type Float32Array */
@@ -79,13 +78,13 @@
       let config = {
         audioDevice: "",
         logarithmic: true,
-        minFreq: 116,
-        maxFreq: 1174,
+        minFreq: 58,
+        maxFreq: 2349,
         sampleRate: 48000,
         gamma: 2.2,
         running: true,
         colorWheelOffset: 0.35,
-        fftSize: 14,
+        fftSize: 13,
         octaveDivision: 12,
         octaveFreq: 440 / Math.pow(2, 9 / 12),
         oscillatorVolume: -35,
@@ -204,9 +203,13 @@
         if (source != null) {
           source.disconnect()
         }
+        if (stream) {
+          for (let t of stream.getTracks()) t.stop()
+        }
         stream = await navigator.mediaDevices.getUserMedia({
           audio: {
-            deviceId,
+            deviceId: { exact: deviceId },
+            channelCount: 1,
             echoCancellation: false,
             autoGainControl: false,
             noiseSuppression: false
@@ -245,7 +248,7 @@
 
       function updateFFTSize() {
         if (analyser != null) {
-          analyser.fftSize = Math.pow(2, config.fftSize)
+          analyser.fftSize = 2 ** config.fftSize
           freqData = new Float32Array(analyser.frequencyBinCount)
         }
       }
@@ -311,10 +314,11 @@
             offCanvas.height
           )
 
+          const z = (2 * analyser.frequencyBinCount) / audioContext.sampleRate
           // Make h x 1 image data from frequency data
           for (let y = 0, i = 0; y < canvas.height; y++) {
             const freq = yToFreq(y)
-            const vv = getIntensity(freqData, (freq / audioContext.sampleRate) * 2 * analyser.frequencyBinCount, gain)
+            const vv = getIntensity(freqData, z * freq, gain)
             const color = getColor(getPitch(freq), vv).rgb()
 
             imageData.data[i++] = color[0]
@@ -398,13 +402,13 @@
         setSampleRate(config.sampleRate)
         await initMicrophoneList()
 
-        let gui = new dat.GUI({ name: "Hello", width: 300 })
-        gui.domElement.id = "gui"
+        const gui = new GUI({ name: "GUI", width: 300 })
+        gui.domElement.style.left = 0
         gui
           .add(config, "audioDevice", audioDevices)
           .name("Audio device")
-          .onFinishChange(async () => {
-            await setAudioDevice(config.audioDevice)
+          .onFinishChange(() => {
+            setAudioDevice(config.audioDevice)
           })
         gui.add(config, "logarithmic").name("Logarithmic scale?")
         const minFreqControl = gui.add(config, "minFreq", 16, 24000, 1)
@@ -429,7 +433,7 @@
         gui.add(config, "colorWheelOffset", 0, 1, 0.01).name("Color wheel offset")
         gui.add(config, "fftSize", 5, 15, 1).name("FFT size").onFinishChange(updateFFTSize)
         gui.add(config, "octaveDivision", 0, 53, 1).name("Octave division")
-        gui.add(config, "octaveFreq", 440 / Math.pow(2, 9 / 12), 1000, 0.01).name("Octave frequency")
+        gui.add(config, "octaveFreq", 440 / 2 ** (9 / 12), 1000, 0.01).name("Octave frequency")
         const oscillatorControls = gui.addFolder("Oscillator")
         oscillatorControls.open()
         oscillatorControls.add(config, "oscillatorVolume", -60, 0, 1).name("Oscillator volume")
