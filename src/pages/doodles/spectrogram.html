@@ -51,7 +51,7 @@
       import GUI from "https://cdn.jsdelivr.net/npm/lil-gui@0.20/+esm"
 
       const canvas = document.querySelector("canvas")
-      const offCanvas = document.createElement("canvas")
+      const offCanvas = new OffscreenCanvas(canvas.width, canvas.height)
       const ctx = canvas.getContext("2d", { willReadFrequently: true })
       const offCtx = offCanvas.getContext("2d")
       const message = document.querySelector("#message")
@@ -300,7 +300,6 @@
             gain = idealGain
           }
           gain = Math.min(100, gain)
-
           // Shift contents 1 pixel to the left
           offCtx.drawImage(
             offCanvas,
@@ -313,14 +312,12 @@
             offCanvas.width - 1,
             offCanvas.height
           )
-
           const z = (2 * analyser.frequencyBinCount) / audioContext.sampleRate
           // Make h x 1 image data from frequency data
           for (let y = 0, i = 0; y < canvas.height; y++) {
             const freq = yToFreq(y)
             const vv = getIntensity(freqData, z * freq, gain)
             const color = getColor(getPitch(freq), vv).rgb()
-
             imageData.data[i++] = color[0]
             imageData.data[i++] = color[1]
             imageData.data[i++] = color[2]
