@@ -12,12 +12,14 @@ We have an isosceles right triangle $\triangle ABC$ with angles 20°, 80°, and 
 This is a well known problem, and you might have even seen it shared on social media at some point. You can find the solution on this [Wikipedia page](https://en.wikipedia.org/wiki/Langley%27s_Adventitious_Angles).
 
 Here's the fun part no one told you:
-* If you try to generalize the problem with general integral angles (or rational angles) in place of the ones in the image, the red angle will **not** in general be integral or rational.
-* Nevertheless, there are infinitely many triangles where the 5 labeled angles, along with the unknown angle, are rational. We'll call these **rational adventitious triangles**.
+
+- If you try to generalize the problem with general integral angles (or rational angles) in place of the ones in the image, the red angle will **not** in general be integral or rational.
+- Nevertheless, there are infinitely many triangles where the 5 labeled angles, along with the unknown angle, are rational. We'll call these **rational adventitious triangles**.
 
 From what I can tell, it appears that the rational adventitious triangles come in two families:
-* One infinite family whose defining feature is that you can construct a right angle out of the segments or vertically mirrored images of the segments. The triangle at the top of this page is a member of this infinite family, because the vertical mirror of line $AE$ is perpendicular to line $DE$.
-* And a finite family of sporadic triangles where there are no right angles involved.
+
+- One infinite family whose defining feature is that you can construct a right angle out of the segments or vertically mirrored images of the segments. The triangle at the top of this page is a member of this infinite family, because the vertical mirror of line $AE$ is perpendicular to line $DE$.
+- And a finite family of sporadic triangles where there are no right angles involved.
 
 For fun, I enumerated the latter and they're all shown below.
 
@@ -43,6 +45,7 @@ I'm curious if one can find natural synthetic geometry proofs for each one, simi
 ![Triangle problem 19](/images/triangles/30_12_17_23.svg)
 
 Here is the C++ code I wrote to produce these triangles. Each line in the output is of the form $(g,a,b,c,\pm d)$ and corresponds to the triangle where $\angle ACB=\frac a{2g}\cdot\frac{\pi}2$, line $AE$ is inclined at angle $\frac bg\cdot\frac{\pi}2$ with respect to the vertical, line $BD$ is inclined at angle $\frac cg\cdot\frac{\pi}2$ with respect to the vertical, and line $DE$ is inclined at angle $\frac dg\cdot\frac{\pi}2$ with respect to the vertical.
+
 ```cpp
 #include <cmath>
 #include <fstream>

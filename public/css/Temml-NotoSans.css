@@ -7,7 +7,7 @@ https://github.com/notofonts/math
 
 @font-face {
   font-family: NotoSans Math;
-  src: url('NotoSansMath-Regular.ttf');
+  src: url("NotoSansMath-Regular.ttf");
 }
 
 math {
@@ -34,7 +34,7 @@ math {
 
 /* display: block is necessary in Firefox and Safari.
  * Not in Chromium, which recognizes display: "block math" written inline. */
- math.tml-display {
+math.tml-display {
   display: block;
   width: 100%;
 }
@@ -44,12 +44,12 @@ math .mathscr {
 }
 
 *.mathcal {
-  font-feature-settings: 'ss01';
+  font-feature-settings: "ss01";
 }
 
 /* Chromium prime alignment */
 mo.tml-prime {
-  font-feature-settings: 'ssty';
+  font-feature-settings: "ssty";
 }
 
 /* Prevent f' from overlapping in Chromium */
@@ -59,8 +59,8 @@ mo.prime-pad {
 
 /* \cancel & \phase use background images. Get them to print. */
 menclose {
-  -webkit-print-color-adjust: exact;  /* Chrome & Edge */
-          print-color-adjust: exact;
+  -webkit-print-color-adjust: exact; /* Chrome & Edge */
+  print-color-adjust: exact;
 }
 
 /* Array cell justification in Firefox & WebKit */
@@ -79,8 +79,8 @@ menclose {
     position: relative;
     padding: 0.5ex 0ex;
   }
-  
-    .tml-overline {
+
+  .tml-overline {
     padding: 0.1em 0 0 0;
     border-top: 0.065em solid;
   }
@@ -106,21 +106,31 @@ menclose {
     clip-path: polygon(0em 0.05em, 0.05em 0em, 100% calc(100% - 0.05em), calc(100% - 0.05em) 100%);
   }
   .sout {
-    clip-path: polygon(0em calc(55% + 0.0333em), 0em calc(55% - 0.0333em), 100% calc(55% - 0.0333em), 100% calc(55% + 0.0333em));
+    clip-path: polygon(
+      0em calc(55% + 0.0333em),
+      0em calc(55% - 0.0333em),
+      100% calc(55% - 0.0333em),
+      100% calc(55% + 0.0333em)
+    );
   }
   .tml-xcancel {
-    background: linear-gradient(to top left,
-    rgba(0,0,0,0) 0%,
-    rgba(0,0,0,0) calc(50% - 0.06em),
-    rgba(0,0,0,1) 50%,
-    rgba(0,0,0,0) calc(50% + 0.06em),
-    rgba(0,0,0,0) 100%),
-    linear-gradient(to top right,
-    rgba(0,0,0,0) 0%,
-    rgba(0,0,0,0) calc(50% - 0.06em),
-    rgba(0,0,0,1) 50%,
-    rgba(0,0,0,0) calc(50% + 0.06em),
-    rgba(0,0,0,0) 100%)
+    background:
+      linear-gradient(
+        to top left,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0) calc(50% - 0.06em),
+        rgba(0, 0, 0, 1) 50%,
+        rgba(0, 0, 0, 0) calc(50% + 0.06em),
+        rgba(0, 0, 0, 0) 100%
+      ),
+      linear-gradient(
+        to top right,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0) calc(50% - 0.06em),
+        rgba(0, 0, 0, 1) 50%,
+        rgba(0, 0, 0, 0) calc(50% + 0.06em),
+        rgba(0, 0, 0, 0) 100%
+      );
   }
 
   .longdiv-top {
@@ -137,12 +147,14 @@ menclose {
     transform: translateY(-0.067em);
     border-radius: 70%;
     clip-path: inset(0 0 0 0.4em);
-    box-sizing: border-box;}
-    .menclose {display: inline-block;
+    box-sizing: border-box;
+  }
+  .menclose {
+    display: inline-block;
     text-align: left;
     position: relative;
   }
-  
+
   .phasor-bottom {
     border-bottom: 0.067em solid;
     padding: 0.2em 0.2em 0.1em 0.6em;
@@ -178,24 +190,24 @@ menclose {
     left: 0;
     border: 0.067em solid;
     border-radius: 50%;
-   }
+  }
 
-   .actuarial {
+  .actuarial {
     padding: 0.03889em 0.03889em 0 0.03889em;
     border-width: 0.08em 0.08em 0em 0em;
     border-style: solid;
     margin-right: 0.03889em;
-   }
+  }
 
-   /* Stretch \widetilde */
+  /* Stretch \widetilde */
   .tml-crooked-2 {
-    transform: scale(2.0, 1.1)
+    transform: scale(2, 1.1);
   }
   .tml-crooked-3 {
-    transform: scale(3.0, 1.3)
+    transform: scale(3, 1.3);
   }
   .tml-crooked-4 {
-    transform: scale(4.0, 1.4)
+    transform: scale(4, 1.4);
   }
   /* set array cell justification */
   .tml-right {
@@ -208,8 +220,12 @@ menclose {
 
 /* Adjust WebKit accents */
 @supports (-webkit-backdrop-filter: blur(1px)) {
-  .tml-xshift { transform: translate(0px, 0.45em) }
-  .tml-capshift { transform: translate(0px, 0.35em) }
+  .tml-xshift {
+    transform: translate(0px, 0.45em);
+  }
+  .tml-capshift {
+    transform: translate(0px, 0.35em);
+  }
 }
 
 /* flex-wrap for line-breaking in Chromium */
@@ -236,11 +252,22 @@ mtable.tml-small mtd {
 /* Firefox */
 @-moz-document url-prefix() {
   /* Avoid flex-wrap */
-  math { display: inline; }
-  math > mrow { padding: 0 }
+  math {
+    display: inline;
+  }
+  math > mrow {
+    padding: 0;
+  }
   /* Adjust Firefox spacing between array rows */
-  mtd, mtable.tml-small mtd { padding-top: 0; padding-bottom: 0; }
-  mtable.tml-jot mtd { padding-top: 0.2ex; padding-bottom: 0.ex; }
+  mtd,
+  mtable.tml-small mtd {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  mtable.tml-jot mtd {
+    padding-top: 0.2ex;
+    padding-bottom: 0ex;
+  }
 }
 
 /* AMS environment auto-numbering via CSS counter. */

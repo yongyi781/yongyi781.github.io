@@ -39,7 +39,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
 
     <script>
-      const defaultText = "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
+      const defaultText =
+        "Let $x$ be a solution to $ax^2+bx+c=0$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]";
       const latexMonarchLanguage = {
         tokenizer: {
           root: [
@@ -47,25 +48,25 @@
             [/\\[a-zA-Z@]+[*]?/, "keyword"],
             [/\$[^$]*\$/, "math"], // Inline math
             [/\\\[[^\]]*\\\]/, "math"], // Display math
-            [/\\\([^\)]*\\\)/, "math"] // Inline math with \( \)
-          ]
-        }
-      }
+            [/\\\([^\)]*\\\)/, "math"], // Inline math with \( \)
+          ],
+        },
+      };
 
       require.config({
         paths: {
-          vs: "https://unpkg.com/monaco-editor/min/vs"
-        }
-      })
+          vs: "https://unpkg.com/monaco-editor/min/vs",
+        },
+      });
 
       require(["vs/editor/editor.main"], () => {
-        monaco.languages.register({ id: "latex" })
-        monaco.languages.setMonarchTokensProvider("latex", latexMonarchLanguage)
+        monaco.languages.register({ id: "latex" });
+        monaco.languages.setMonarchTokensProvider("latex", latexMonarchLanguage);
         monaco.languages.setLanguageConfiguration("latex", {
           brackets: [
             ["(", ")"],
             ["{", "}"],
-            ["\\[", "\\]"]
+            ["\\[", "\\]"],
           ],
           autoClosingPairs: [
             { open: "{", close: "}" },
@@ -73,23 +74,23 @@
             { open: "(", close: ")" },
             { open: "[", close: "]" },
             { open: '"', close: '"', notIn: ["string"] },
-            { open: "'", close: "'", notIn: ["string", "comment"] }
+            { open: "'", close: "'", notIn: ["string", "comment"] },
           ],
           surroundingPairs: [
             { open: "{", close: "}" },
             { open: "(", close: ")" },
             { open: "[", close: "]" },
             { open: '"', close: '"' },
-            { open: "`", close: "'" }
-          ]
-        })
+            { open: "`", close: "'" },
+          ],
+        });
 
         monaco.editor.defineTheme("latex-theme", {
           base: "vs-dark",
           colors: [],
           inherit: true,
-          rules: [{ token: "math", foreground: "4ec9b0" }]
-        })
+          rules: [{ token: "math", foreground: "4ec9b0" }],
+        });
 
         const editor = monaco.editor.create(document.getElementById("editor"), {
           value: localStorage.getItem("content") || defaultText,
@@ -99,22 +100,22 @@
           wordWrap: "on",
           tabSize: 2,
           minimap: { enabled: false },
-          quickSuggestions: false
-        })
+          quickSuggestions: false,
+        });
 
         function renderPreview() {
-          const input = editor.getValue()
-          const preview = document.getElementById("preview")
-          preview.textContent = input
-          localStorage.setItem("content", input)
+          const input = editor.getValue();
+          const preview = document.getElementById("preview");
+          preview.textContent = input;
+          localStorage.setItem("content", input);
 
-          temml.renderMathInElement(preview, { fences: "all", annotate: true })
+          temml.renderMathInElement(preview, { fences: "all", annotate: true });
         }
 
-        editor.onDidChangeModelContent(renderPreview)
-        editor.focus()
-        renderPreview()
-      })
+        editor.onDidChangeModelContent(renderPreview);
+        editor.focus();
+        renderPreview();
+      });
     </script>
   </body>
 </html>
