@@ -51,76 +51,72 @@
     </div>
 
     <script>
-      let urlParams = new URLSearchParams(window.location.search);
-      let mathbotStyleStr = urlParams.get("mathbot");
-      let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1";
+      let urlParams = new URLSearchParams(window.location.search)
+      let mathbotStyleStr = urlParams.get("mathbot")
+      let mathbotStyle = mathbotStyleStr == "true" || mathbotStyleStr == "1"
 
-      inlineChar = mathbotStyle ? "$$" : "$";
-      displayMath = [["\\[", "\\]"]];
+      inlineChar = mathbotStyle ? "$$" : "$"
+      displayMath = [["\\[", "\\]"]]
       if (!mathbotStyle) {
-        displayMath.push(["$$", "$$"]);
+        displayMath.push(["$$", "$$"])
       }
 
-      let macros = {};
+      let macros = {}
 
-      let lowercase = "abcdefghijklmnopqrstuvwxyz";
-      let uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      let lowercase = "abcdefghijklmnopqrstuvwxyz"
+      let uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
       for (let c of uppercase) {
-        macros["b" + c] = "\\mathbb{" + c + "}";
-        macros["c" + c] = "\\mathcal{" + c + "}";
+        macros["b" + c] = "\\mathbb{" + c + "}"
+        macros["c" + c] = "\\mathcal{" + c + "}"
       }
       for (let c of lowercase + uppercase) {
-        macros["f" + c] = "\\mathfrak{" + c + "}";
-        macros["s" + c] = "\\mathscr{" + c + "}";
+        macros["f" + c] = "\\mathfrak{" + c + "}"
+        macros["s" + c] = "\\mathscr{" + c + "}"
       }
 
       MathJax = {
         tex: {
           inlineMath: [
             [inlineChar, inlineChar],
-            ["\\(", "\\)"],
+            ["\\(", "\\)"]
           ],
           displayMath,
           tags: "ams",
-          macros,
-        },
-      };
+          macros
+        }
+      }
     </script>
-    <script
-      id="MathJax-script"
-      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-    ></script>
+    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
-      var isTypesetting = false;
-      var defaultText =
-        "Let $$x$$ be a solution to $$ax^2+bx+c=0$$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]";
+      var isTypesetting = false
+      var defaultText = "Let $$x$$ be a solution to $$ax^2+bx+c=0$$. Then \\[x=\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}.\\]"
 
       function convert() {
-        let input = document.querySelector("#input").value.trim();
-        localStorage.setItem("content", input);
+        let input = document.querySelector("#input").value.trim()
+        localStorage.setItem("content", input)
 
         if (isTypesetting) {
-          return;
+          return
         }
-        let output = document.querySelector("#output");
-        output.textContent = input;
+        let output = document.querySelector("#output")
+        output.textContent = input
 
-        MathJax.texReset();
-        MathJax.typesetClear();
-        isTypesetting = true;
+        MathJax.texReset()
+        MathJax.typesetClear()
+        isTypesetting = true
         MathJax.typesetPromise([output])
-          .catch((err) => {
-            console.error(err);
+          .catch(err => {
+            console.error(err)
           })
           .then(() => {
-            isTypesetting = false;
-          });
+            isTypesetting = false
+          })
       }
 
-      document.querySelector("#input").addEventListener("keyup", convert);
+      document.querySelector("#input").addEventListener("keyup", convert)
 
-      document.querySelector("#input").value = localStorage.getItem("content") || defaultText;
-      convert();
+      document.querySelector("#input").value = localStorage.getItem("content") || defaultText
+      convert()
     </script>
   </body>
 </html>

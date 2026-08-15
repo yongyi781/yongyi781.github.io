@@ -21,8 +21,7 @@
       <div class="grid grid-cols-12 gap-1">
         <label
           v-for="(_, i) in 88"
-          class="bg-gray-200 has-checked:bg-red-200 p-1 border border-gray-400 rounded cursor-pointer text-center"
-        >
+          class="bg-gray-200 has-checked:bg-red-200 p-1 border border-gray-400 rounded cursor-pointer text-center">
           <input type="radio" name="note" :value="i" v-model="selectedNote" hidden />
           <span>{{ names[i] }}</span>
         </label>
@@ -41,106 +40,72 @@
             </thead>
             <tbody>
               <tr class="hover:bg-gray-100" v-if="selectedNote >= 28">
-                <td class="px-4 py-2 border border-gray-300">
-                  Major 17th below = {{ names[selectedNote - 28] }}
-                </td>
+                <td class="px-4 py-2 border border-gray-300">Major 17th below = {{ names[selectedNote - 28] }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(-28, 5, 1) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(-28, 5, 1) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote >= 19">
-                <td class="px-4 py-2 border border-gray-300">
-                  Perfect 12th below = {{ names[selectedNote - 19] }}
-                </td>
+                <td class="px-4 py-2 border border-gray-300">Perfect 12th below = {{ names[selectedNote - 19] }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(-19, 3, 1) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(-19, 3, 1) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote >= 16">
-                <td class="px-4 py-2 border border-gray-300">
-                  Major 10th below = {{ names[selectedNote - 16] }}
-                </td>
+                <td class="px-4 py-2 border border-gray-300">Major 10th below = {{ names[selectedNote - 16] }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(-16, 5, 2) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(-16, 5, 2) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote >= 9">
-                <td class="px-4 py-2 border border-gray-300">
-                  Major 6th below = {{ names[selectedNote - 9] }}
-                </td>
+                <td class="px-4 py-2 border border-gray-300">Major 6th below = {{ names[selectedNote - 9] }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(-9, 5, 3) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(-9, 5, 3) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote >= 7">
-                <td class="px-4 py-2 border border-gray-300">
-                  Perfect 5th below = {{ names[selectedNote - 7] }}
-                </td>
+                <td class="px-4 py-2 border border-gray-300">Perfect 5th below = {{ names[selectedNote - 7] }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(-7, 3, 2) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(-7, 3, 2) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote < 88 - 7">
                 <td class="px-4 py-2 border border-gray-300">
-                  <div v-if="selectedNote >= 5">
-                    Perfect 4th below = {{ names[selectedNote - 5] }}
-                  </div>
+                  <div v-if="selectedNote >= 5">Perfect 4th below = {{ names[selectedNote - 5] }}</div>
                   <div>Perfect 5th above = {{ names[selectedNote + 7] }}</div>
-                  <div v-if="selectedNote < 88 - 19">
-                    Perfect 12th above = {{ names[selectedNote + 19] }}
-                  </div>
+                  <div v-if="selectedNote < 88 - 19">Perfect 12th above = {{ names[selectedNote + 19] }}</div>
                 </td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(7, 2, 3) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(7, 2, 3) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote < 88 - 4">
                 <td class="px-4 py-2 border border-gray-300">
-                  <div v-if="selectedNote < 88 - 4">
-                    Major 3rd above = {{ names[selectedNote + 4] }}
-                  </div>
-                  <div v-if="selectedNote < 88 - 16">
-                    Major 10th above = {{ names[selectedNote + 16] }}
-                  </div>
-                  <div v-if="selectedNote < 88 - 28">
-                    Major 17th above = {{ names[selectedNote + 28] }}
-                  </div>
+                  <div v-if="selectedNote < 88 - 4">Major 3rd above = {{ names[selectedNote + 4] }}</div>
+                  <div v-if="selectedNote < 88 - 16">Major 10th above = {{ names[selectedNote + 16] }}</div>
+                  <div v-if="selectedNote < 88 - 28">Major 17th above = {{ names[selectedNote + 28] }}</div>
                 </td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(4, 4, 5) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(4, 4, 5) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote < 88 - 5">
-                <td class="px-4 py-2 border border-gray-300">
-                  Perfect 4th above = {{ names[selectedNote + 5] }}
-                </td>
+                <td class="px-4 py-2 border border-gray-300">Perfect 4th above = {{ names[selectedNote + 5] }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(5, 3, 4) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(5, 3, 4) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote < 88 - 14">
                 <td class="px-4 py-2 border border-gray-300">
                   <div>Minor 9th above = {{ names[selectedNote + 14] }}</div>
-                  <div v-if="selectedNote < 88 - 26">
-                    Minor 16th above = {{ names[selectedNote + 26] }}
-                  </div>
-                  <div v-if="selectedNote < 88 - 38">
-                    Minor 23rd above = {{ names[selectedNote + 38] }}
-                  </div>
+                  <div v-if="selectedNote < 88 - 26">Minor 16th above = {{ names[selectedNote + 26] }}</div>
+                  <div v-if="selectedNote < 88 - 38">Minor 23rd above = {{ names[selectedNote + 38] }}</div>
                 </td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(14, 4, 9) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(14, 4, 9) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote < 88 - 9">
-                <td class="px-4 py-2 border border-gray-300">
-                  Major 6th above = {{ names[selectedNote + 9] }}
-                </td>
+                <td class="px-4 py-2 border border-gray-300">Major 6th above = {{ names[selectedNote + 9] }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(9, 3, 5) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(9, 3, 5) }}</td>
               </tr>
               <tr class="hover:bg-gray-100" v-if="selectedNote < 88 - 10">
                 <td class="px-4 py-2 border border-gray-300">
-                  <div v-if="selectedNote < 88 - 10">
-                    Minor 7th above = {{ names[selectedNote + 10] }}
-                  </div>
-                  <div v-if="selectedNote < 88 - 22">
-                    Minor 14th above = {{ names[selectedNote + 22] }}
-                  </div>
-                  <div v-if="selectedNote < 88 - 34">
-                    Minor 21st above = {{ names[selectedNote + 34] }}
-                  </div>
+                  <div v-if="selectedNote < 88 - 10">Minor 7th above = {{ names[selectedNote + 10] }}</div>
+                  <div v-if="selectedNote < 88 - 22">Minor 14th above = {{ names[selectedNote + 22] }}</div>
+                  <div v-if="selectedNote < 88 - 34">Minor 21st above = {{ names[selectedNote + 34] }}</div>
                 </td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatFreqStr(10, 4, 7) }}</td>
                 <td class="px-4 py-2 border border-gray-300">{{ beatPeriodStr(10, 4, 7) }}</td>
@@ -152,7 +117,7 @@
     </div>
 
     <script type="module">
-      const { createApp, ref, computed } = Vue;
+      const { createApp, ref, computed } = Vue
 
       createApp({
         setup() {
@@ -244,34 +209,34 @@
             "A7",
             "B♭7",
             "B7",
-            "C8",
-          ];
+            "C8"
+          ]
 
-          let globalTuning = ref(0);
-          let selectedNote = ref(48); // A4
-          let freq = computed(() => frequency(selectedNote.value));
+          let globalTuning = ref(0)
+          let selectedNote = ref(48) // A4
+          let freq = computed(() => frequency(selectedNote.value))
 
           function frequency(note) {
-            return Math.pow(2, (note - 48 + globalTuning.value / 100) / 12) * 440;
+            return Math.pow(2, (note - 48 + globalTuning.value / 100) / 12) * 440
           }
 
           // e.g. -7 semitones, 3rd overtone, compared with 2nd overtone = perfect fifth
           function beatFrequency(semitones, mult1, mult2) {
-            return (Math.pow(2, semitones / 12) * mult1 - mult2) * freq.value;
+            return (Math.pow(2, semitones / 12) * mult1 - mult2) * freq.value
           }
 
           function beatFreqStr(semitones, mult1, mult2) {
-            const f = beatFrequency(semitones, mult1, mult2);
-            const sign = Math.sign(semitones) * Math.sign(f);
-            const dir = sign < 0 ? "narrow" : "wide";
-            const bpm = Math.abs(f) * 60;
-            return `${Math.abs(f).toPrecision(3)} Hz ${dir} | ${bpm.toFixed()} bpm | half = ${(bpm / 2).toFixed()} bpm`;
+            const f = beatFrequency(semitones, mult1, mult2)
+            const sign = Math.sign(semitones) * Math.sign(f)
+            const dir = sign < 0 ? "narrow" : "wide"
+            const bpm = Math.abs(f) * 60
+            return `${Math.abs(f).toPrecision(3)} Hz ${dir} | ${bpm.toFixed()} bpm | half = ${(bpm / 2).toFixed()} bpm`
           }
 
           function beatPeriodStr(semitones, mult1, mult2) {
-            const f = beatFrequency(semitones, mult1, mult2);
-            const p = 1 / Math.abs(f);
-            return `${p.toPrecision(3)} s`;
+            const f = beatFrequency(semitones, mult1, mult2)
+            const p = 1 / Math.abs(f)
+            return `${p.toPrecision(3)} s`
           }
 
           return {
@@ -282,10 +247,10 @@
             frequency,
             beatFrequency,
             beatFreqStr,
-            beatPeriodStr,
-          };
-        },
-      }).mount("#app");
+            beatPeriodStr
+          }
+        }
+      }).mount("#app")
     </script>
   </body>
 </html>

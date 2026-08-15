@@ -8,8 +8,8 @@ declare global {
     // interface Platform {}
   }
   interface Window {
-    CindyJS: any;
+    CindyJS: any
   }
 }
 
-export type Matrix = [[number, number], [number, number]];
+export type Matrix = [[number, number], [number, number]]

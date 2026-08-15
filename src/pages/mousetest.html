@@ -9,8 +9,7 @@
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
       rel="stylesheet"
       integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-      crossorigin="anonymous"
-    />
+      crossorigin="anonymous" />
     <link rel="stylesheet" href="css/mousetest.css" />
 
     <title>Mouse Test</title>
@@ -28,15 +27,10 @@
       </div>
       <h3>Results</h3>
       <div>
-        Here, <em>deading</em> refers to the server responding on the immediate tick after your
-        click, instead of lagging and delaying to the next tick.
+        Here, <em>deading</em> refers to the server responding on the immediate tick after your click, instead of
+        lagging and delaying to the next tick.
         <h6 class="text-center">Probability of deading vs. latency</h6>
-        <canvas
-          id="pingGraphCanvas"
-          width="768"
-          height="384"
-          style="display: block; margin: auto"
-        ></canvas>
+        <canvas id="pingGraphCanvas" width="768" height="384" style="display: block; margin: auto"></canvas>
         <h4>Raw graph data</h4>
         <pre id="rawGraphData" class="text-nowrap"></pre>
       </div>
@@ -45,32 +39,24 @@
       <h3>Advanced</h3>
       You can customize this game by adding the following parameters to the URL query string:
       <ul>
-        <li>
-          <code>bg=&lt;color&gt;</code>: The background color. Any format recognized by CSS is
-          accepted.
-        </li>
+        <li><code>bg=&lt;color&gt;</code>: The background color. Any format recognized by CSS is accepted.</li>
         <li><code>orbsize=&lt;positive integer&gt;</code>: Orb size in pixels.</li>
         <li>
-          <code>count=&lt;nonnegative integer&gt;</code>: The number of ticks to countdown. 0 means
-          that the orb spawns in the next immediate tick.
+          <code>count=&lt;nonnegative integer&gt;</code>: The number of ticks to countdown. 0 means that the orb spawns
+          in the next immediate tick.
         </li>
-        <li>
-          <code>rand=&lt;0|1&gt;</code>: Whether to spawn the orb at a random time instead of a
-          fixed time.
-        </li>
+        <li><code>rand=&lt;0|1&gt;</code>: Whether to spawn the orb at a random time instead of a fixed time.</li>
         <li><code>team=&lt;vief|acantha&gt;</code>: Whether to use yellow orbs or green orbs.</li>
       </ul>
     </div>
     <script
       src="https://code.jquery.com/jquery-3.4.1.min.js"
       integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-      crossorigin="anonymous"
-    ></script>
+      crossorigin="anonymous"></script>
     <script
       src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
       integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-      crossorigin="anonymous"
-    ></script>
+      crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
     <script>
       $(function () {
@@ -87,14 +73,14 @@
           startMouseLocation = {},
           orbAppearTime = new Date().getTime(),
           data = [],
-          pingGraph;
+          pingGraph
 
         function getParameterByName(name) {
           /// <summary>Gets query string parameter by name.</summary>
-          name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+          name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]")
           var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-            results = regex.exec(location.search);
-          return results === null ? undefined : decodeURIComponent(results[1].replace(/\+/g, " "));
+            results = regex.exec(location.search)
+          return results === null ? undefined : decodeURIComponent(results[1].replace(/\+/g, " "))
         }
 
         var chartData = {
@@ -103,104 +89,104 @@
             {
               label: "Probability of deading",
               strokeColor: "#5a8",
-              data: [],
-            },
-          ],
-        };
+              data: []
+            }
+          ]
+        }
 
         function placeOrb() {
-          var top = Math.floor((gameHeight - orbSize) * Math.random());
-          var left = Math.floor((gameWidth - orbSize) * Math.random());
+          var top = Math.floor((gameHeight - orbSize) * Math.random())
+          var left = Math.floor((gameWidth - orbSize) * Math.random())
 
           // Record center location of orb
-          orbLocation = { x: left + orbSize / 2, y: top + orbSize / 2 };
+          orbLocation = { x: left + orbSize / 2, y: top + orbSize / 2 }
 
-          $("<div/>").addClass(orbClassName).css({ top: top, left: left }).appendTo("#stage");
-          orbAppearTime = new Date().getTime();
+          $("<div/>").addClass(orbClassName).css({ top: top, left: left }).appendTo("#stage")
+          orbAppearTime = new Date().getTime()
         }
 
         function removeOrb() {
-          $("#stage .orb").remove();
+          $("#stage .orb").remove()
         }
 
         function resetCountdown() {
-          countdown = defCountdown;
-          misclicks = [];
+          countdown = defCountdown
+          misclicks = []
         }
 
         function tick() {
           if (countdown > 0) {
-            $("#message").text(countdown--).show();
+            $("#message").text(countdown--).show()
           } else if (countdown == 0) {
             // Time to start measuring
-            $("#message").hide();
-            placeOrb();
-            countdown = -1;
+            $("#message").hide()
+            placeOrb()
+            countdown = -1
           }
         }
 
         function startGame() {
-          resetCountdown();
-          tick();
-          setInterval(tick, tickLength);
+          resetCountdown()
+          tick()
+          setInterval(tick, tickLength)
         }
 
         function isGameRunning() {
-          return countdown == -1;
+          return countdown == -1
         }
 
         // Gets the fraction of clicks that were faster than the given time.
         function getFractionLessThan(time) {
           return (
             data.filter(function (x) {
-              return x.click.time < time;
+              return x.click.time < time
             }).length / data.length
-          );
+          )
         }
 
         function median(values) {
           values.sort(function (a, b) {
-            return a - b;
-          });
-          var half = Math.floor(values.length / 2);
-          if (values.length % 2 !== 0) return values[half];
-          else return (values[half - 1] + values[half]) / 2;
+            return a - b
+          })
+          var half = Math.floor(values.length / 2)
+          if (values.length % 2 !== 0) return values[half]
+          else return (values[half - 1] + values[half]) / 2
         }
 
         function getCumulativeResults() {
           var minTime = data.reduce(function (prev, curr) {
-            return Math.min(prev, curr.click.time);
-          }, Infinity);
+            return Math.min(prev, curr.click.time)
+          }, Infinity)
 
           var sum = data.reduce(
             function (prev, curr) {
               return {
                 time: prev.time + curr.click.time,
-                misclicks: prev.misclicks + curr.misclicks.length,
-              };
+                misclicks: prev.misclicks + curr.misclicks.length
+              }
             },
-            { time: 0, misclicks: 0 },
-          );
+            { time: 0, misclicks: 0 }
+          )
           var medianTime = median(
             data.map(function (x) {
-              return x.click.time;
-            }),
-          );
+              return x.click.time
+            })
+          )
 
           return {
             minTime: minTime,
             avgTime: sum.time / data.length,
             medianTime: medianTime,
-            avgMisclicks: sum.misclicks / data.length,
-          };
+            avgMisclicks: sum.misclicks / data.length
+          }
         }
 
         function initPingGraph() {
           for (var i = 0; i <= 500; i += 25) {
-            chartData.labels.push(i);
-            chartData.datasets[0].data.push(0);
+            chartData.labels.push(i)
+            chartData.datasets[0].data.push(0)
           }
-          var ctx = $("#pingGraphCanvas")[0].getContext("2d");
+          var ctx = $("#pingGraphCanvas")[0].getContext("2d")
           pingGraph = new Chart(ctx).Line(chartData, {
             bezierCurve: false,
             datasetFill: false,
@@ -210,51 +196,48 @@
             scaleStartValue: 0,
             scaleShowGridLines: true,
             scaleShowVerticalLines: false,
-            pointDot: false,
-          });
+            pointDot: false
+          })
         }
 
         function updatePingGraph() {
-          var newData = { labels: [], values: [] };
+          var newData = { labels: [], values: [] }
           chartData.labels.forEach(function (x, i) {
-            var y = getFractionLessThan(tickLength - x);
+            var y = getFractionLessThan(tickLength - x)
 
-            newData.labels.push(x);
-            newData.values.push(Math.round(1000 * y) / 1000);
-            pingGraph.datasets[0].points[i].value = y;
-          });
-          pingGraph.update();
-          $("#rawGraphData").text(JSON.stringify(newData));
+            newData.labels.push(x)
+            newData.values.push(Math.round(1000 * y) / 1000)
+            pingGraph.datasets[0].points[i].value = y
+          })
+          pingGraph.update()
+          $("#rawGraphData").text(JSON.stringify(newData))
         }
 
         $("#startGame").click(function () {
-          $(this).hide();
-          startGame();
-        });
+          $(this).hide()
+          startGame()
+        })
 
         $("#stage")
           .width(orbSize)
           .height(orbSize)
           .on("mousedown", ".orb", function (e) {
-            time = new Date().getTime();
+            time = new Date().getTime()
             result = {
               orbLocation: orbLocation,
               click: {
                 time: time - orbAppearTime,
                 x: e.offsetX - orbSize / 2,
-                y: e.offsetY - orbSize / 2,
+                y: e.offsetY - orbSize / 2
               },
-              misclicks: misclicks,
-            };
-            data.push(result);
+              misclicks: misclicks
+            }
+            data.push(result)
 
             $("#lastResult").text(
-              "Last orb: Time = " +
-                result.click.time +
-                " ms | Misclicks = " +
-                result.misclicks.length,
-            );
-            var cumResults = getCumulativeResults();
+              "Last orb: Time = " + result.click.time + " ms | Misclicks = " + result.misclicks.length
+            )
+            var cumResults = getCumulativeResults()
             $("#cumulativeResults").text(
               "Number of orbs: " +
                 data.length +
@@ -272,14 +255,14 @@
                 "%" +
                 " | < 400 ms: " +
                 (100 * getFractionLessThan(400)).toFixed(1) +
-                "%",
-            );
-            $("#rawData").text(JSON.stringify(data));
-            updatePingGraph();
+                "%"
+            )
+            $("#rawData").text(JSON.stringify(data))
+            updatePingGraph()
 
-            removeOrb();
-            resetCountdown();
-          });
+            removeOrb()
+            resetCountdown()
+          })
 
         $("#wrap")
           .width(gameWidth)
@@ -291,19 +274,19 @@
               misclicks.push({
                 time: new Date().getTime() - orbAppearTime,
                 x: e.offsetX - orbLocation.x,
-                y: e.offsetY - orbLocation.y,
-              });
+                y: e.offsetY - orbLocation.y
+              })
             }
-          });
+          })
 
         if (getParameterByName("team") === "acantha") {
-          orbClassName = "orb green-orb";
-          orbSize = getParameterByName("orbsize") || 32;
+          orbClassName = "orb green-orb"
+          orbSize = getParameterByName("orbsize") || 32
         }
 
-        initPingGraph();
-        $("#message").hide();
-      });
+        initPingGraph()
+        $("#message").hide()
+      })
     </script>
   </body>
 </html>
