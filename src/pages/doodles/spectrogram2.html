@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Musical Spectrogram II</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        background: #050608;
+        color: #eef1f7;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body,
+      main,
+      .stage {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      #spectrum {
+        background: #050608;
+      }
+
+      #grid,
+      #cursor {
+        pointer-events: none;
+      }
+
+      #hit-area {
+        position: absolute;
+        inset: 0;
+        cursor: crosshair;
+        touch-action: none;
+      }
+
+      .panel {
+        position: absolute;
+        z-index: 2;
+        top: 14px;
+        left: 14px;
+        width: min(340px, calc(100vw - 28px));
+        max-height: calc(100vh - 28px);
+        overflow: auto;
+        border: 1px solid rgb(255 255 255 / 12%);
+        border-radius: 14px;
+        background: rgb(12 14 19 / 88%);
+        box-shadow: 0 16px 50px rgb(0 0 0 / 45%);
+        backdrop-filter: blur(16px);
+      }
+
+      .panel header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 14px;
+      }
+
+      h1 {
+        flex: 1;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 650;
+        letter-spacing: 0.02em;
+      }
+
+      button,
+      select,
+      input {
+        font: inherit;
+      }
+
+      button {
+        border: 1px solid rgb(255 255 255 / 14%);
+        border-radius: 8px;
+        padding: 7px 10px;
+        background: rgb(255 255 255 / 8%);
+        color: inherit;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: rgb(255 255 255 / 13%);
+      }
+
+      button.primary {
+        border-color: #72a7ff;
+        background: #2f6fd3;
+      }
+
+      button.primary:hover {
+        background: #397de8;
+      }
+
+      #settings {
+        border-top: 1px solid rgb(255 255 255 / 9%);
+        padding: 12px 14px 14px;
+      }
+
+      .panel.collapsed #settings {
+        display: none;
+      }
+
+      .status {
+        overflow: hidden;
+        color: #aeb7c8;
+        font-size: 11px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      fieldset {
+        display: grid;
+        gap: 9px;
+        margin: 0 0 14px;
+        padding: 0;
+        border: 0;
+      }
+
+      fieldset:last-child {
+        margin-bottom: 0;
+      }
+
+      legend {
+        margin-bottom: 8px;
+        color: #8893a7;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      label {
+        display: grid;
+        grid-template-columns: 116px 1fr 46px;
+        align-items: center;
+        gap: 8px;
+        color: #c9d0dc;
+        font-size: 12px;
+      }
+
+      label.wide {
+        grid-template-columns: 116px 1fr;
+      }
+
+      label.check {
+        grid-template-columns: 1fr auto;
+      }
+
+      select {
+        min-width: 0;
+        border: 1px solid rgb(255 255 255 / 12%);
+        border-radius: 7px;
+        padding: 5px 7px;
+        background: #171a21;
+        color: inherit;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        accent-color: #73a8ff;
+      }
+
+      output {
+        color: #f1f4f9;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+
+      .hint {
+        margin: 2px 0 0;
+        color: #778195;
+        font-size: 10px;
+        line-height: 1.4;
+      }
+
+      #error {
+        display: none;
+        position: absolute;
+        z-index: 4;
+        right: 14px;
+        bottom: 14px;
+        max-width: min(460px, calc(100vw - 28px));
+        border: 1px solid #aa4d5d;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: rgb(72 17 27 / 92%);
+        color: #ffdbe1;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <div class="stage">
+        <canvas id="spectrum"></canvas>
+        <canvas id="grid"></canvas>
+        <canvas id="cursor"></canvas>
+        <div id="hit-area" aria-label="Spectrogram; drag vertically to play a reference tone"></div>
+      </div>
+
+      <section class="panel" aria-label="Spectrogram controls">
+        <header>
+          <h1>Musical Spectrogram II</h1>
+          <span class="status" id="status">Audio disabled</span>
+          <button id="enable" class="primary">Enable</button>
+          <button id="collapse" aria-label="Toggle settings" aria-expanded="true">−</button>
+        </header>
+
+        <div id="settings">
+          <fieldset>
+            <legend>Input</legend>
+            <label class="wide"
+              >Device
+              <select id="device">
+                <option value="">Default microphone</option>
+              </select></label
+            >
+            <label class="check">Running <input id="running" type="checkbox" checked /></label>
+            <label
+              >Columns / sec <input id="rate" type="range" min="10" max="60" step="1" value="30" /><output
+                >30</output
+              ></label
+            >
+          </fieldset>
+
+          <fieldset>
+            <legend>Frequency</legend>
+            <label
+              >Minimum <input id="min-freq" type="range" min="20" max="500" step="1" value="55" /><output
+                >55 Hz</output
+              ></label
+            >
+            <label
+              >Maximum <input id="max-freq" type="range" min="1000" max="16000" step="10" value="5000" /><output
+                >5000 Hz</output
+              ></label
+            >
+            <label class="check">Logarithmic <input id="logarithmic" type="checkbox" checked /></label>
+            <label
+              >Divisions / octave <input id="divisions" type="range" min="0" max="24" step="1" value="12" /><output
+                >12</output
+              ></label
+            >
+            <label
+              >Concert A <input id="tuning" type="range" min="415" max="466" step="0.1" value="440" /><output
+                >440.0</output
+              ></label
+            >
+          </fieldset>
+
+          <fieldset>
+            <legend>Exposure</legend>
+            <label class="check">Automatic levels <input id="auto-levels" type="checkbox" checked /></label>
+            <label
+              >Floor <input id="floor" type="range" min="-120" max="-35" step="1" value="-90" /><output
+                >−90 dB</output
+              ></label
+            >
+            <label
+              >Ceiling <input id="ceiling" type="range" min="-80" max="0" step="1" value="-30" /><output
+                >−30 dB</output
+              ></label
+            >
+            <label
+              >Gamma <input id="gamma" type="range" min="0.3" max="3" step="0.05" value="1.4" /><output
+                >1.40</output
+              ></label
+            >
+            <label
+              >Saturation <input id="saturation" type="range" min="0.2" max="1.8" step="0.05" value="1.25" /><output
+                >1.25</output
+              ></label
+            >
+            <label
+              >Color rotation <input id="color" type="range" min="0" max="1" step="0.01" value="0.35" /><output
+                >0.35</output
+              ></label
+            >
+            <p class="hint">
+              Automatic exposure follows robust spectrum percentiles, avoiding gain pumping from one loud bin.
+            </p>
+          </fieldset>
+
+          <fieldset>
+            <legend>Reference tone</legend>
+            <label class="check">Snap to grid <input id="snap" type="checkbox" checked /></label>
+            <label class="wide"
+              >Wave
+              <select id="wave">
+                <option>sine</option>
+                <option>triangle</option>
+                <option>sawtooth</option>
+                <option>square</option>
+              </select></label
+            >
+            <label
+              >Volume <input id="volume" type="range" min="-60" max="-12" step="1" value="-38" /><output
+                >−38 dB</output
+              ></label
+            >
+            <p class="hint">Press or drag anywhere outside this panel to hear the frequency under the pointer.</p>
+          </fieldset>
+
+          <button id="clear">Clear history</button>
+        </div>
+      </section>
+      <div id="error" role="alert"></div>
+    </main>
+
+    <script type="module">
+      const $ = id => document.getElementById(id)
+      const spectrumCanvas = $("spectrum")
+      const gridCanvas = $("grid")
+      const cursorCanvas = $("cursor")
+      const hitArea = $("hit-area")
+      const gridCtx = gridCanvas.getContext("2d")
+      const cursorCtx = cursorCanvas.getContext("2d")
+      const gl = spectrumCanvas.getContext("webgl2", { alpha: false, antialias: false })
+
+      const config = {
+        running: true,
+        rate: 30,
+        minFreq: 55,
+        maxFreq: 5000,
+        logarithmic: true,
+        divisions: 12,
+        tuning: 440,
+        autoLevels: true,
+        floor: -90,
+        ceiling: -30,
+        gamma: 1.4,
+        saturation: 1.25,
+        color: 0.35,
+        snap: true,
+        wave: "sine",
+        volume: -38
+      }
+
+      let audioContext
+      let stream
+      let source
+      let lowAnalyser
+      let highAnalyser
+      let lowSpectrum
+      let highSpectrum
+      let enabled = false
+      let timer
+      let writeX = 0
+      let historyWidth = 1
+      let historyHeight = 1
+      let rowCache = []
+      let dbColumn = new Float32Array(1)
+      let textureColumn = new Uint8Array(1)
+      let autoFrame = 0
+      let oscillator
+      let oscillatorGain
+      let pointer = { x: 0, y: 0, inside: false }
+
+      function showError(error) {
+        const element = $("error")
+        element.textContent = error instanceof Error ? error.message : String(error)
+        element.style.display = "block"
+      }
+
+      if (!gl) {
+        showError("This experiment requires WebGL 2.")
+        throw new Error("WebGL 2 is unavailable")
+      }
+
+      const vertexSource = `#version 300 es
+        in vec2 position;
+        out vec2 uv;
+        void main() {
+          uv = position * 0.5 + 0.5;
+          gl_Position = vec4(position, 0.0, 1.0);
+        }
+      `
+
+      const fragmentSource = `#version 300 es
+        precision highp float;
+        precision highp sampler2D;
+        in vec2 uv;
+        out vec4 outColor;
+        uniform sampler2D history;
+        uniform int historyWidth;
+        uniform int historyHeight;
+        uniform int writeX;
+        uniform float minFreq;
+        uniform float maxFreq;
+        uniform float logarithmic;
+        uniform float gammaValue;
+        uniform float saturation;
+        uniform float colorOffset;
+        uniform float c0;
+
+        vec3 linearToSrgb(vec3 color) {
+          vec3 low = 12.92 * color;
+          vec3 high = 1.055 * pow(max(color, vec3(0.0)), vec3(1.0 / 2.4)) - 0.055;
+          return mix(high, low, lessThanEqual(color, vec3(0.0031308)));
+        }
+
+        vec3 oklch(float l, float c, float h) {
+          float a = c * cos(h);
+          float b = c * sin(h);
+          float ll = l + 0.3963377774 * a + 0.2158037573 * b;
+          float mm = l - 0.1055613458 * a - 0.0638541728 * b;
+          float ss = l - 0.0894841775 * a - 1.2914855480 * b;
+          ll = ll * ll * ll;
+          mm = mm * mm * mm;
+          ss = ss * ss * ss;
+          vec3 rgb = vec3(
+            4.0767416621 * ll - 3.3077115913 * mm + 0.2309699292 * ss,
+            -1.2684380046 * ll + 2.6097574011 * mm - 0.3413193965 * ss,
+            -0.0041960863 * ll - 0.7034186147 * mm + 1.7076147010 * ss
+          );
+
+          // Compress out-of-gamut chroma toward a neutral color at the same
+          // perceptual lightness instead of clipping individual RGB channels.
+          float neutral = l * l * l;
+          float gamut = 1.0;
+          if (rgb.r < 0.0) gamut = min(gamut, neutral / max(neutral - rgb.r, 0.000001));
+          if (rgb.g < 0.0) gamut = min(gamut, neutral / max(neutral - rgb.g, 0.000001));
+          if (rgb.b < 0.0) gamut = min(gamut, neutral / max(neutral - rgb.b, 0.000001));
+          if (rgb.r > 1.0) gamut = min(gamut, (1.0 - neutral) / max(rgb.r - neutral, 0.000001));
+          if (rgb.g > 1.0) gamut = min(gamut, (1.0 - neutral) / max(rgb.g - neutral, 0.000001));
+          if (rgb.b > 1.0) gamut = min(gamut, (1.0 - neutral) / max(rgb.b - neutral, 0.000001));
+          rgb = vec3(neutral) + gamut * (rgb - vec3(neutral));
+          return linearToSrgb(rgb);
+        }
+
+        void main() {
+          int displayX = min(int(floor(uv.x * float(historyWidth))), historyWidth - 1);
+          int sourceX = (writeX + displayX) % historyWidth;
+          int sourceY = min(int(floor(uv.y * float(historyHeight))), historyHeight - 1);
+          float intensity = texelFetch(history, ivec2(sourceX, sourceY), 0).r;
+          intensity = pow(intensity, 1.0 / gammaValue);
+          intensity = 1.0 - exp(-1.45 * intensity);
+          float frequency = mix(minFreq, maxFreq, uv.y);
+          if (logarithmic > 0.5) frequency = minFreq * pow(maxFreq / minFreq, uv.y);
+          float pitch = fract(log2(frequency / c0) + colorOffset);
+          vec3 rgb = oklch(0.70 * intensity, 0.17 * saturation * intensity, pitch * 6.28318530718);
+          outColor = vec4(clamp(rgb, 0.0, 1.0), 1.0);
+        }
+      `
+
+      function compileShader(type, sourceCode) {
+        const shader = gl.createShader(type)
+        gl.shaderSource(shader, sourceCode)
+        gl.compileShader(shader)
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader))
+        return shader
+      }
+
+      const program = gl.createProgram()
+      gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexSource))
+      gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentSource))
+      gl.linkProgram(program)
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program))
+      gl.useProgram(program)
+
+      const vertices = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertices)
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW)
+      const position = gl.getAttribLocation(program, "position")
+      gl.enableVertexAttribArray(position)
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0)
+
+      const uniforms = Object.fromEntries(
+        [
+          "historyWidth",
+          "historyHeight",
+          "writeX",
+          "minFreq",
+          "maxFreq",
+          "logarithmic",
+          "gammaValue",
+          "saturation",
+          "colorOffset",
+          "c0"
+        ].map(name => [name, gl.getUniformLocation(program, name)])
+      )
+      const historyTexture = gl.createTexture()
+      gl.activeTexture(gl.TEXTURE0)
+      gl.bindTexture(gl.TEXTURE_2D, historyTexture)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+      gl.uniform1i(gl.getUniformLocation(program, "history"), 0)
+
+      function c0() {
+        return config.tuning / 2 ** (4 + 9 / 12)
+      }
+
+      function interpolateFrequency(t) {
+        return config.logarithmic
+          ? config.minFreq * Math.pow(config.maxFreq / config.minFreq, t)
+          : config.minFreq + (config.maxFreq - config.minFreq) * t
+      }
+
+      function frequencyToY(frequency) {
+        const t = config.logarithmic
+          ? Math.log(frequency / config.minFreq) / Math.log(config.maxFreq / config.minFreq)
+          : (frequency - config.minFreq) / (config.maxFreq - config.minFreq)
+        return (1 - t) * gridCanvas.clientHeight
+      }
+
+      function pointerFrequency(y) {
+        return interpolateFrequency(1 - y / hitArea.clientHeight)
+      }
+
+      function snapFrequency(frequency) {
+        if (!config.snap || config.divisions === 0) return frequency
+        const octaveReference = config.tuning / 2 ** (9 / 12)
+        return (
+          octaveReference *
+          2 ** (Math.round(Math.log2(frequency / octaveReference) * config.divisions) / config.divisions)
+        )
+      }
+
+      function musicalPitch(frequency) {
+        const names = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "G♯", "A", "B♭", "B"]
+        const semitones = 12 * Math.log2(frequency / c0())
+        const nearest = Math.round(semitones)
+        const note = ((nearest % 12) + 12) % 12
+        return { name: names[note], octave: Math.floor(nearest / 12), cents: 100 * (semitones - nearest) }
+      }
+
+      function drawSpectrogram() {
+        gl.useProgram(program)
+        gl.uniform1i(uniforms.historyWidth, historyWidth)
+        gl.uniform1i(uniforms.historyHeight, historyHeight)
+        gl.uniform1i(uniforms.writeX, writeX)
+        gl.uniform1f(uniforms.minFreq, config.minFreq)
+        gl.uniform1f(uniforms.maxFreq, config.maxFreq)
+        gl.uniform1f(uniforms.logarithmic, config.logarithmic ? 1 : 0)
+        gl.uniform1f(uniforms.gammaValue, config.gamma)
+        gl.uniform1f(uniforms.saturation, config.saturation)
+        gl.uniform1f(uniforms.colorOffset, config.color)
+        gl.uniform1f(uniforms.c0, c0())
+        gl.drawArrays(gl.TRIANGLES, 0, 6)
+      }
+
+      function clearHistory() {
+        writeX = 0
+        gl.bindTexture(gl.TEXTURE_2D, historyTexture)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, historyWidth, historyHeight, 0, gl.RED, gl.UNSIGNED_BYTE, null)
+        drawSpectrogram()
+      }
+
+      function rebuildRowCache() {
+        if (!audioContext || !lowAnalyser || !highAnalyser) return
+        rowCache = Array.from({ length: historyHeight }, (_, row) => {
+          const frequency = interpolateFrequency(row / Math.max(1, historyHeight - 1))
+          const lowBin = (frequency * lowAnalyser.fftSize) / audioContext.sampleRate
+          const highBin = (frequency * highAnalyser.fftSize) / audioContext.sampleRate
+          const blend = Math.max(0, Math.min(1, Math.log2(frequency / 350) / Math.log2(900 / 350)))
+          return { lowBin, highBin, blend }
+        })
+      }
+
+      function sampleSpectrum(data, position) {
+        const left = Math.max(0, Math.min(data.length - 1, Math.floor(position)))
+        const right = Math.min(data.length - 1, left + 1)
+        const t = position - Math.floor(position)
+        return data[left] + (data[right] - data[left]) * t
+      }
+
+      function updateAutomaticLevels(values) {
+        if (!config.autoLevels || ++autoFrame % 12 !== 0) return
+        const finite = Array.from(values)
+          .filter(Number.isFinite)
+          .sort((a, b) => a - b)
+        if (finite.length < 10) return
+        const percentile = p => finite[Math.floor((finite.length - 1) * p)]
+        const targetFloor = Math.max(-120, Math.min(-45, percentile(0.18) + 2))
+        const targetCeiling = Math.max(targetFloor + 24, Math.min(-3, percentile(0.997) + 7))
+        config.floor += (targetFloor - config.floor) * 0.08
+        config.ceiling += (targetCeiling - config.ceiling) * (targetCeiling > config.ceiling ? 0.65 : 0.08)
+        $("floor").value = config.floor
+        $("ceiling").value = config.ceiling
+        updateOutputs()
+      }
+
+      function captureColumn() {
+        if (!enabled || !config.running || document.hidden || !rowCache.length) return
+        lowAnalyser.getFloatFrequencyData(lowSpectrum)
+        highAnalyser.getFloatFrequencyData(highSpectrum)
+        for (let row = 0; row < historyHeight; row++) {
+          const mapping = rowCache[row]
+          const low = sampleSpectrum(lowSpectrum, mapping.lowBin)
+          const high = sampleSpectrum(highSpectrum, mapping.highBin)
+          dbColumn[row] = low + (high - low) * mapping.blend
+        }
+        updateAutomaticLevels(dbColumn)
+
+        const range = Math.max(1, config.ceiling - config.floor)
+        for (let row = 0; row < historyHeight; row++) {
+          const value = Number.isFinite(dbColumn[row]) ? (dbColumn[row] - config.floor) / range : 0
+          textureColumn[row] = 255 * Math.max(0, Math.min(1, value))
+        }
+        gl.bindTexture(gl.TEXTURE_2D, historyTexture)
+        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1)
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, writeX, 0, 1, historyHeight, gl.RED, gl.UNSIGNED_BYTE, textureColumn)
+        writeX = (writeX + 1) % historyWidth
+        drawSpectrogram()
+      }
+
+      function scheduleCapture() {
+        clearTimeout(timer)
+        const delay = enabled && config.running && !document.hidden ? 1000 / config.rate : 250
+        timer = setTimeout(() => {
+          captureColumn()
+          scheduleCapture()
+        }, delay)
+      }
+
+      function resize() {
+        const dpr = Math.min(2, window.devicePixelRatio || 1)
+        const width = Math.max(1, Math.round(innerWidth * dpr))
+        const height = Math.max(1, Math.round(innerHeight * dpr))
+        for (const canvas of [spectrumCanvas, gridCanvas, cursorCanvas]) {
+          canvas.width = width
+          canvas.height = height
+        }
+        historyWidth = Math.min(width, gl.getParameter(gl.MAX_TEXTURE_SIZE))
+        historyHeight = Math.min(height, gl.getParameter(gl.MAX_TEXTURE_SIZE))
+        dbColumn = new Float32Array(historyHeight)
+        textureColumn = new Uint8Array(historyHeight)
+        gl.viewport(0, 0, width, height)
+        clearHistory()
+        rebuildRowCache()
+        drawGrid()
+        drawCursor()
+      }
+
+      function drawGrid() {
+        const dpr = gridCanvas.width / gridCanvas.clientWidth
+        gridCtx.clearRect(0, 0, gridCanvas.width, gridCanvas.height)
+        gridCtx.save()
+        gridCtx.scale(dpr, dpr)
+        if (config.divisions > 0) {
+          const octaveReference = config.tuning / 2 ** (9 / 12)
+          const minimum = Math.ceil(Math.log2(config.minFreq / octaveReference) * config.divisions)
+          const maximum = Math.floor(Math.log2(config.maxFreq / octaveReference) * config.divisions)
+          gridCtx.font = "11px Inter, system-ui, sans-serif"
+          for (let step = minimum; step <= maximum; step++) {
+            const frequency = octaveReference * 2 ** (step / config.divisions)
+            const y = Math.round(frequencyToY(frequency) * dpr) / dpr
+            const octave = step % config.divisions === 0
+            gridCtx.lineWidth = octave ? 1.25 : 0.8
+            gridCtx.strokeStyle = octave ? "rgb(255 255 255 / 55%)" : "rgb(255 255 255 / 23%)"
+            gridCtx.beginPath()
+            gridCtx.moveTo(0, y)
+            gridCtx.lineTo(gridCanvas.clientWidth, y)
+            gridCtx.stroke()
+            if (octave) {
+              gridCtx.fillStyle = "rgb(255 255 255 / 62%)"
+              gridCtx.fillText(`${frequency.toFixed(frequency < 100 ? 1 : 0)} Hz`, gridCanvas.clientWidth - 58, y - 4)
+            }
+          }
+        }
+        gridCtx.restore()
+      }
+
+      function drawCursor() {
+        const dpr = cursorCanvas.width / cursorCanvas.clientWidth
+        cursorCtx.clearRect(0, 0, cursorCanvas.width, cursorCanvas.height)
+        if (!pointer.inside) return
+        const frequency = snapFrequency(pointerFrequency(pointer.y))
+        const y = frequencyToY(frequency)
+        const pitch = musicalPitch(frequency)
+        const cents = `${pitch.cents < 0 ? "−" : "+"}${Math.abs(pitch.cents).toFixed(0)}¢`
+        const text = `${pitch.name}${pitch.octave}  ${frequency.toFixed(1)} Hz  ${cents}`
+        cursorCtx.save()
+        cursorCtx.scale(dpr, dpr)
+        cursorCtx.font = "600 13px Inter, system-ui, sans-serif"
+        const width = cursorCtx.measureText(text).width + 16
+        const x = Math.max(8, Math.min(pointer.x + 12, cursorCanvas.clientWidth - width - 8))
+        const labelY = Math.max(26, y - 12)
+        cursorCtx.strokeStyle = oscillator ? "rgb(255 255 255 / 75%)" : "rgb(255 255 255 / 35%)"
+        cursorCtx.setLineDash([4, 4])
+        cursorCtx.beginPath()
+        cursorCtx.moveTo(0, y)
+        cursorCtx.lineTo(cursorCanvas.clientWidth, y)
+        cursorCtx.stroke()
+        cursorCtx.setLineDash([])
+        cursorCtx.fillStyle = "rgb(8 10 14 / 82%)"
+        cursorCtx.beginPath()
+        cursorCtx.roundRect(x, labelY - 19, width, 25, 7)
+        cursorCtx.fill()
+        cursorCtx.fillStyle = "#f5f7fb"
+        cursorCtx.fillText(text, x + 8, labelY - 2)
+        cursorCtx.restore()
+      }
+
+      async function refreshDevices() {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const select = $("device")
+        const selected = select.value
+        select.replaceChildren(new Option("Default microphone", ""))
+        for (const device of devices) {
+          if (device.kind === "audioinput") select.add(new Option(device.label || "Microphone", device.deviceId))
+        }
+        select.value = selected
+      }
+
+      async function startInput(deviceId = "") {
+        if (stream) stream.getTracks().forEach(track => track.stop())
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
+            channelCount: 1,
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        })
+        if (!audioContext) audioContext = new AudioContext({ latencyHint: "interactive" })
+        await audioContext.resume()
+        source?.disconnect()
+        source = audioContext.createMediaStreamSource(stream)
+        lowAnalyser = audioContext.createAnalyser()
+        highAnalyser = audioContext.createAnalyser()
+        lowAnalyser.fftSize = 32768
+        highAnalyser.fftSize = 4096
+        lowAnalyser.smoothingTimeConstant = 0
+        highAnalyser.smoothingTimeConstant = 0
+        source.connect(lowAnalyser)
+        source.connect(highAnalyser)
+        lowSpectrum = new Float32Array(lowAnalyser.frequencyBinCount)
+        highSpectrum = new Float32Array(highAnalyser.frequencyBinCount)
+        enabled = true
+        $("error").style.display = "none"
+        $("enable").textContent = "Enabled"
+        $("enable").classList.remove("primary")
+        $("status").textContent = `${Math.round(audioContext.sampleRate / 1000)} kHz · dual FFT`
+        await refreshDevices()
+        rebuildRowCache()
+        scheduleCapture()
+      }
+
+      function setOscillatorFrequency() {
+        if (!oscillator) return
+        const frequency = snapFrequency(pointerFrequency(pointer.y))
+        oscillator.frequency.setTargetAtTime(frequency, audioContext.currentTime, 0.008)
+      }
+
+      async function startOscillator(event) {
+        if (!enabled || oscillator || event.button !== 0) return
+        await audioContext.resume()
+        hitArea.setPointerCapture(event.pointerId)
+        oscillator = audioContext.createOscillator()
+        oscillatorGain = audioContext.createGain()
+        oscillator.type = config.wave
+        oscillatorGain.gain.value = 0
+        oscillator.connect(oscillatorGain).connect(audioContext.destination)
+        setOscillatorFrequency()
+        oscillator.start()
+        oscillatorGain.gain.setTargetAtTime(10 ** (config.volume / 20), audioContext.currentTime, 0.008)
+        drawCursor()
+      }
+
+      function stopOscillator() {
+        if (!oscillator) return
+        const stoppingOscillator = oscillator
+        oscillatorGain.gain.cancelScheduledValues(audioContext.currentTime)
+        oscillatorGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.012)
+        stoppingOscillator.stop(audioContext.currentTime + 0.08)
+        oscillator = null
+        oscillatorGain = null
+        drawCursor()
+      }
+
+      function updateOutputs() {
+        const values = {
+          rate: `${config.rate}`,
+          "min-freq": `${config.minFreq} Hz`,
+          "max-freq": `${config.maxFreq} Hz`,
+          divisions: `${config.divisions}`,
+          tuning: config.tuning.toFixed(1),
+          floor: `${config.floor < 0 ? "−" : ""}${Math.abs(config.floor).toFixed(0)} dB`,
+          ceiling: `${config.ceiling < 0 ? "−" : ""}${Math.abs(config.ceiling).toFixed(0)} dB`,
+          gamma: config.gamma.toFixed(2),
+          saturation: config.saturation.toFixed(2),
+          color: config.color.toFixed(2),
+          volume: `${config.volume < 0 ? "−" : ""}${Math.abs(config.volume)} dB`
+        }
+        for (const [id, value] of Object.entries(values)) $(`${id}`).nextElementSibling.textContent = value
+      }
+
+      function bindRange(id, key, { geometry = false, grid = false, shader = false } = {}) {
+        $(id).addEventListener("input", event => {
+          config[key] = Number(event.target.value)
+          updateOutputs()
+          if (geometry) {
+            rebuildRowCache()
+            clearHistory()
+          }
+          if (grid) drawGrid()
+          if (shader) drawSpectrogram()
+          drawCursor()
+        })
+      }
+
+      bindRange("rate", "rate")
+      bindRange("min-freq", "minFreq", { geometry: true, grid: true, shader: true })
+      bindRange("max-freq", "maxFreq", { geometry: true, grid: true, shader: true })
+      bindRange("divisions", "divisions", { grid: true })
+      bindRange("tuning", "tuning", { grid: true, shader: true })
+      bindRange("gamma", "gamma", { shader: true })
+      bindRange("saturation", "saturation", { shader: true })
+      bindRange("color", "color", { shader: true })
+      bindRange("volume", "volume")
+
+      for (const [id, key] of [
+        ["floor", "floor"],
+        ["ceiling", "ceiling"]
+      ]) {
+        $(id).addEventListener("input", event => {
+          config[key] = Number(event.target.value)
+          if (key === "floor") config.floor = Math.min(config.floor, config.ceiling - 1)
+          else config.ceiling = Math.max(config.ceiling, config.floor + 1)
+          config.autoLevels = false
+          $("auto-levels").checked = false
+          event.target.value = config[key]
+          updateOutputs()
+        })
+      }
+
+      $("running").addEventListener("change", event => {
+        config.running = event.target.checked
+        scheduleCapture()
+      })
+      $("logarithmic").addEventListener("change", event => {
+        config.logarithmic = event.target.checked
+        rebuildRowCache()
+        clearHistory()
+        drawGrid()
+        drawCursor()
+      })
+      $("auto-levels").addEventListener("change", event => (config.autoLevels = event.target.checked))
+      $("snap").addEventListener("change", event => {
+        config.snap = event.target.checked
+        setOscillatorFrequency()
+        drawCursor()
+      })
+      $("wave").addEventListener("change", event => {
+        config.wave = event.target.value
+        if (oscillator) oscillator.type = config.wave
+      })
+      $("device").addEventListener("change", event => startInput(event.target.value).catch(showError))
+      $("enable").addEventListener("click", () => startInput($("device").value).catch(showError))
+      $("clear").addEventListener("click", clearHistory)
+      $("collapse").addEventListener("click", () => {
+        const panel = document.querySelector(".panel")
+        panel.classList.toggle("collapsed")
+        const expanded = !panel.classList.contains("collapsed")
+        $("collapse").textContent = expanded ? "−" : "+"
+        $("collapse").setAttribute("aria-expanded", expanded)
+      })
+
+      hitArea.addEventListener("pointerenter", () => {
+        pointer.inside = true
+        drawCursor()
+      })
+      hitArea.addEventListener("pointerleave", () => {
+        if (!oscillator) pointer.inside = false
+        drawCursor()
+      })
+      hitArea.addEventListener("pointermove", event => {
+        pointer = { x: event.clientX, y: event.clientY, inside: true }
+        setOscillatorFrequency()
+        drawCursor()
+      })
+      hitArea.addEventListener("pointerdown", startOscillator)
+      hitArea.addEventListener("pointerup", stopOscillator)
+      hitArea.addEventListener("pointercancel", stopOscillator)
+      window.addEventListener("blur", stopOscillator)
+      window.addEventListener("resize", resize)
+      document.addEventListener("visibilitychange", scheduleCapture)
+
+      updateOutputs()
+      resize()
+      scheduleCapture()
+    </script>
+  </body>
+</html>

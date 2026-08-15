@@ -52,10 +52,12 @@
 
       const canvas = document.querySelector("canvas")
       const offCanvas = new OffscreenCanvas(canvas.width, canvas.height)
-      const ctx = canvas.getContext("2d", { willReadFrequently: true })
+      const ctx = canvas.getContext("2d")
       const offCtx = offCanvas.getContext("2d")
       const message = document.querySelector("#message")
       const C0 = 440 / Math.pow(2, 4 + 9 / 12)
+      const COLOR_STEPS = 256
+      const HUE_STEPS = 256
       /** @type MediaStream */
       let stream
       let source
@@ -63,7 +65,17 @@
       let analyser
       /** @type Float32Array */
       let freqData
+      let linearFreqData
       let imageData
+      let historyX = 0
+      let renderCacheKey = ""
+      let rowSampleIndices
+      let rowSampleWeights
+      let rowColorOffsets
+      let minSampleIndex = 0
+      let maxSampleIndex = 0
+      let gridLines = []
+      let colorLut
       let audioDevices
       /** @type gainNode */
       let gainNode
@@ -96,6 +108,7 @@
         },
         clear: () => {
           offCtx.clearRect(0, 0, offCanvas.width, offCanvas.height)
+          historyX = 0
         }
       }
       let audioContext
@@ -125,6 +138,21 @@
         let c = 0.2 * intensity
         let h = 360 * ((pitch + config.colorWheelOffset) % 1)
         return chroma.oklch(l, c, h, alpha)
+      }
+
+      function createColorLut() {
+        const lut = new Uint8ClampedArray(HUE_STEPS * COLOR_STEPS * 3)
+        for (let hue = 0; hue < HUE_STEPS; hue++) {
+          for (let intensity = 0; intensity < COLOR_STEPS; intensity++) {
+            const value = intensity / (COLOR_STEPS - 1)
+            const rgb = chroma.oklch(0.67 * value, 0.2 * value, (360 * hue) / HUE_STEPS).rgb()
+            const offset = (hue * COLOR_STEPS + intensity) * 3
+            lut[offset] = rgb[0]
+            lut[offset + 1] = rgb[1]
+            lut[offset + 2] = rgb[2]
+          }
+        }
+        return lut
       }
 
       // Returns 0-1, 0 corresponds to C.
@@ -242,7 +270,9 @@
       function resizeCanvas() {
         canvas.width = offCanvas.width = window.innerWidth
         canvas.height = offCanvas.height = window.innerHeight
-        imageData = ctx.getImageData(0, 0, 1, canvas.height)
+        imageData = ctx.createImageData(1, canvas.height)
+        historyX = 0
+        renderCacheKey = ""
         ctx.imageSmoothingEnabled = offCtx.imageSmoothingEnabled = false
       }
 
@@ -250,6 +280,8 @@
         if (analyser != null) {
           analyser.fftSize = 2 ** config.fftSize
           freqData = new Float32Array(analyser.frequencyBinCount)
+          linearFreqData = new Float32Array(analyser.frequencyBinCount)
+          renderCacheKey = ""
         }
       }
 
@@ -269,30 +301,87 @@
         return Math.pow(10, db / 20)
       }
 
-      function getIntensity(data, x, gain) {
-        // Cubic sampling (Catmull–Rom)
-        const i = Math.floor(x)
-        const t = x - i
+      function updateRenderCache() {
+        if (analyser == null || audioContext == null) return
 
-        // Fetch neighbors with edge clamping
-        const p0 = fromDecibels(data[Math.max(i - 1, 0)] + gain)
-        const p1 = fromDecibels(data[Math.max(i, 0)] + gain)
-        const p2 = fromDecibels(data[Math.min(i + 1, data.length - 1)] + gain)
-        const p3 = fromDecibels(data[Math.min(i + 2, data.length - 1)] + gain)
+        const key = [
+          canvas.height,
+          config.logarithmic,
+          config.minFreq,
+          config.maxFreq,
+          config.colorWheelOffset,
+          config.octaveDivision,
+          config.octaveFreq,
+          analyser.frequencyBinCount,
+          audioContext.sampleRate
+        ].join("|")
+        if (key === renderCacheKey) return
+        renderCacheKey = key
 
-        const a0 = p1
-        const a1 = 0.5 * (p2 - p0)
-        const a2 = p0 - 2.5 * p1 + 2 * p2 - 0.5 * p3
-        const a3 = -0.5 * p0 + 1.5 * p1 - 1.5 * p2 + 0.5 * p3
+        const height = canvas.height
+        const sampleCount = analyser.frequencyBinCount
+        const frequencyToBin = (2 * sampleCount) / audioContext.sampleRate
+        rowSampleIndices = new Int32Array(height * 4)
+        rowSampleWeights = new Float32Array(height * 4)
+        rowColorOffsets = new Uint32Array(height)
+        minSampleIndex = sampleCount - 1
+        maxSampleIndex = 0
 
-        const y = ((a3 * t + a2) * t + a1) * t + a0
-        return Math.pow(y, 1 / config.gamma)
+        for (let y = 0; y < height; y++) {
+          const freq = yToFreq(y)
+          const x = frequencyToBin * freq
+          const i = Math.floor(x)
+          const t = x - i
+          const t2 = t * t
+          const t3 = t2 * t
+          const offset = y * 4
+          rowSampleIndices[offset] = Math.max(0, Math.min(i - 1, sampleCount - 1))
+          rowSampleIndices[offset + 1] = Math.max(0, Math.min(i, sampleCount - 1))
+          rowSampleIndices[offset + 2] = Math.max(0, Math.min(i + 1, sampleCount - 1))
+          rowSampleIndices[offset + 3] = Math.max(0, Math.min(i + 2, sampleCount - 1))
+          rowSampleWeights[offset] = -0.5 * t + t2 - 0.5 * t3
+          rowSampleWeights[offset + 1] = 1 - 2.5 * t2 + 1.5 * t3
+          rowSampleWeights[offset + 2] = 0.5 * t + 2 * t2 - 1.5 * t3
+          rowSampleWeights[offset + 3] = -0.5 * t2 + 0.5 * t3
+          minSampleIndex = Math.min(minSampleIndex, rowSampleIndices[offset])
+          maxSampleIndex = Math.max(maxSampleIndex, rowSampleIndices[offset + 3])
+
+          const hue = (getPitch(freq) + config.colorWheelOffset) % 1
+          const hueIndex = Math.floor(hue * HUE_STEPS) % HUE_STEPS
+          rowColorOffsets[y] = hueIndex * COLOR_STEPS * 3
+        }
+
+        gridLines = []
+        if (config.octaveDivision > 0) {
+          const minPitch = Math.ceil(Math.log2(config.minFreq / config.octaveFreq) * config.octaveDivision)
+          const maxPitch = Math.floor(Math.log2(config.maxFreq / config.octaveFreq) * config.octaveDivision)
+          for (let i = minPitch; i <= maxPitch; i++) {
+            gridLines.push({
+              color: getColor(i / config.octaveDivision, i % config.octaveDivision === 0 ? 1 : 0.4).css(),
+              y: Math.round(freqToY(config.octaveFreq * Math.pow(2, i / config.octaveDivision))) + 0.5
+            })
+          }
+        }
+      }
+
+      function drawHistory() {
+        const rightWidth = offCanvas.width - historyX
+        if (rightWidth > 0) {
+          ctx.drawImage(offCanvas, historyX, 0, rightWidth, offCanvas.height, 0, 0, rightWidth, canvas.height)
+        }
+        if (historyX > 0) {
+          ctx.drawImage(offCanvas, 0, 0, historyX, offCanvas.height, rightWidth, 0, historyX, canvas.height)
+        }
       }
 
       function render() {
+        if (analyser != null) updateRenderCache()
         if (config.running && analyser != null) {
           analyser.getFloatFrequencyData(freqData)
-          const maxDb = Math.max.apply(null, freqData)
+          let maxDb = -Infinity
+          for (let i = 0; i < freqData.length; i++) {
+            if (freqData[i] > maxDb) maxDb = freqData[i]
+          }
           const idealGain = -maxDb
           if (gain < idealGain) {
             gain += Math.min(0.1, idealGain - gain) // Increase gain slowly
@@ -300,50 +389,44 @@
             gain = idealGain
           }
           gain = Math.min(100, gain)
-          // Shift contents 1 pixel to the left
-          offCtx.drawImage(
-            offCanvas,
-            1,
-            0,
-            offCanvas.width - 1,
-            offCanvas.height,
-            0,
-            0,
-            offCanvas.width - 1,
-            offCanvas.height
-          )
-          const z = (2 * analyser.frequencyBinCount) / audioContext.sampleRate
+          for (let i = minSampleIndex; i <= maxSampleIndex; i++) {
+            linearFreqData[i] = fromDecibels(freqData[i])
+          }
+          const gainMultiplier = fromDecibels(gain)
           // Make h x 1 image data from frequency data
           for (let y = 0, i = 0; y < canvas.height; y++) {
-            const freq = yToFreq(y)
-            const vv = getIntensity(freqData, z * freq, gain)
-            const color = getColor(getPitch(freq), vv).rgb()
-            imageData.data[i++] = color[0]
-            imageData.data[i++] = color[1]
-            imageData.data[i++] = color[2]
+            const offset = y * 4
+            const value = Math.max(
+              0,
+              (linearFreqData[rowSampleIndices[offset]] * rowSampleWeights[offset] +
+                linearFreqData[rowSampleIndices[offset + 1]] * rowSampleWeights[offset + 1] +
+                linearFreqData[rowSampleIndices[offset + 2]] * rowSampleWeights[offset + 2] +
+                linearFreqData[rowSampleIndices[offset + 3]] * rowSampleWeights[offset + 3]) *
+                gainMultiplier
+            )
+            const intensity = Math.min(
+              COLOR_STEPS - 1,
+              Math.round(Math.pow(value, 1 / config.gamma) * (COLOR_STEPS - 1))
+            )
+            const colorOffset = rowColorOffsets[y] + intensity * 3
+            imageData.data[i++] = colorLut[colorOffset]
+            imageData.data[i++] = colorLut[colorOffset + 1]
+            imageData.data[i++] = colorLut[colorOffset + 2]
             imageData.data[i++] = 255
           }
-          offCtx.putImageData(imageData, offCanvas.width - 1, 0)
+          offCtx.putImageData(imageData, historyX, 0)
+          historyX = (historyX + 1) % offCanvas.width
         }
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(offCanvas, 0, 0)
+        drawHistory()
 
         // Draw lines
-        if (config.octaveDivision > 0) {
-          const minPitch = Math.ceil(Math.log2(config.minFreq / config.octaveFreq) * config.octaveDivision)
-          const maxPitch = Math.floor(Math.log2(config.maxFreq / config.octaveFreq) * config.octaveDivision)
-          ctx.lineWidth = 1
-          for (let i = minPitch; i <= maxPitch; i++) {
-            ctx.strokeStyle =
-              i % config.octaveDivision === 0
-                ? getColor(i / config.octaveDivision, 1, 1)
-                : getColor(i / config.octaveDivision, 0.4)
-            let y = Math.round(freqToY(config.octaveFreq * Math.pow(2, i / config.octaveDivision))) + 0.5
-            ctx.beginPath()
-            ctx.moveTo(0, y)
-            ctx.lineTo(canvas.width, y)
-            ctx.stroke()
-          }
+        ctx.lineWidth = 1
+        for (const line of gridLines) {
+          ctx.strokeStyle = line.color
+          ctx.beginPath()
+          ctx.moveTo(0, line.y)
+          ctx.lineTo(canvas.width, line.y)
+          ctx.stroke()
         }
 
         // Draw frequency text
@@ -351,13 +434,12 @@
         let freq = yToFreq(oscY)
         let p = getMusicalPitch(freq)
         let str = `${freq.toFixed(1)} Hz = ${p.name}${p.octave} (${p.cents < 0 ? "−" : "+"}${Math.abs(p.cents.toFixed(0))})`
+        ctx.font = "16px 'Open Sans', 'Lucida Grande', 'Verdana', sans-serif"
         let metrics = ctx.measureText(str)
-        window.metrics = metrics
         let x = Math.min(lastX + 6, canvas.width - metrics.width - 3)
         let y = Math.max(oscY - 12, metrics.actualBoundingBoxAscent + 3)
         let color = getColor(getPitch(freq), oscillator == null ? 0.5 : 1)
         ctx.fillStyle = oscillator == null ? "#ccc" : color
-        ctx.font = "16px 'Open Sans', 'Lucida Grande', 'Verdana', sans-serif"
         ctx.fillText(str, x, y)
 
         // Draw frequency circle
@@ -395,6 +477,7 @@
       })
 
       resizeCanvas()
+      colorLut = createColorLut()
       document.addEventListener("DOMContentLoaded", async () => {
         setSampleRate(config.sampleRate)
         await initMicrophoneList()
