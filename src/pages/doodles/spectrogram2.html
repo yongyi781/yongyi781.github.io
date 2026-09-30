@@ -123,6 +123,28 @@
         display: none;
       }
 
+      #tuner {
+        padding: 0 14px 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      #tuner-note {
+        font-size: 24px;
+        font-weight: 650;
+      }
+      #tuner-detail {
+        margin-left: 10px;
+        font-size: 12px;
+        color: #c9d0dc;
+      }
+      #tuner-state {
+        margin: 3px 0 0;
+        font-size: 11px;
+        color: #aeb7c8;
+      }
+      #tuner[data-held="true"] #tuner-note {
+        color: #b6af90;
+      }
+
       .status {
         overflow: hidden;
         color: #aeb7c8;
@@ -231,6 +253,10 @@
           <button id="collapse" aria-label="Toggle settings" aria-expanded="true">−</button>
         </header>
 
+        <div id="tuner" aria-label="Live pitch" data-held="false">
+          <span id="tuner-note">—</span><span id="tuner-detail"></span>
+          <p id="tuner-state">Waiting for pitch</p>
+        </div>
         <div id="settings">
           <fieldset>
             <legend>Input</legend>
@@ -242,8 +268,8 @@
             >
             <label class="check">Running <input id="running" type="checkbox" checked /></label>
             <label
-              >Columns / sec <input id="rate" type="range" min="10" max="60" step="1" value="30" /><output
-                >30</output
+              >Columns / sec <input id="rate" type="range" min="10" max="60" step="1" value="60" /><output
+                >60</output
               ></label
             >
           </fieldset>
@@ -251,17 +277,18 @@
           <fieldset>
             <legend>Frequency</legend>
             <label
-              >Minimum <input id="min-freq" type="range" min="20" max="500" step="1" value="55" /><output
-                >55 Hz</output
+              >Minimum <input id="min-freq" type="range" min="20" max="500" step="1" value="65" /><output
+                >65 Hz</output
               ></label
             >
             <label
-              >Maximum <input id="max-freq" type="range" min="1000" max="16000" step="10" value="5000" /><output
-                >5000 Hz</output
+              >Maximum <input id="max-freq" type="range" min="1000" max="16000" step="10" value="4000" /><output
+                >4000 Hz</output
               ></label
             >
             <label class="check">Logarithmic <input id="logarithmic" type="checkbox" checked /></label>
             <label class="check">Track fundamental <input id="track-pitch" type="checkbox" checked /></label>
+            <p class="hint">Brighter contour = higher confidence. Dotted sections are held estimates.</p>
             <label
               >Divisions / octave <input id="divisions" type="range" min="0" max="24" step="1" value="12" /><output
                 >12</output
@@ -351,9 +378,11 @@
 
       const config = {
         running: true,
-        rate: 30,
-        minFreq: 55,
-        maxFreq: 5000,
+        rate: 60,
+        minFreq: 65,
+        maxFreq: 4000,
+        pitchMinFreq: 65,
+        pitchMaxFreq: 1500,
         logarithmic: true,
         trackPitch: true,
         divisions: 12,
@@ -369,18 +398,106 @@
         volume: -38
       }
 
+      const SETTINGS_KEY = "musical-spectrogram2.settings.v1"
+      const settingControls = {
+        rate: "rate",
+        minFreq: "min-freq",
+        maxFreq: "max-freq",
+        logarithmic: "logarithmic",
+        trackPitch: "track-pitch",
+        divisions: "divisions",
+        tuning: "tuning",
+        autoLevels: "auto-levels",
+        floor: "floor",
+        ceiling: "ceiling",
+        contrast: "contrast",
+        saturation: "saturation",
+        color: "color",
+        snap: "snap",
+        wave: "wave",
+        volume: "volume"
+      }
+
+      function restoreSettings() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY))
+          if (!saved || typeof saved !== "object") return
+          for (const [key, id] of Object.entries(settingControls)) {
+            const input = $(id)
+            const value = saved[key]
+            if (typeof config[key] === "boolean") {
+              if (typeof value === "boolean") config[key] = value
+            } else if (typeof config[key] === "number") {
+              if (typeof value === "number" && Number.isFinite(value))
+                config[key] = Math.max(Number(input.min), Math.min(Number(input.max), value))
+            } else if ([...input.options].some(option => option.value === value)) config[key] = value
+          }
+          config.floor = Math.min(config.floor, config.ceiling - 1)
+        } catch {
+          // Private browsing and malformed saved data must not prevent startup.
+        }
+      }
+
+      function saveSettings() {
+        try {
+          const saved = Object.fromEntries(Object.keys(settingControls).map(key => [key, config[key]]))
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(saved))
+        } catch {
+          /* Storage may be unavailable. */
+        }
+      }
+
+      function syncSettingControls() {
+        for (const [key, id] of Object.entries(settingControls)) {
+          const input = $(id)
+          if (input.type === "checkbox") input.checked = config[key]
+          else input.value = config[key]
+        }
+      }
+
+      let latestPitch = null
+      let tunerTimeout
+      function updateTuner(result = latestPitch) {
+        latestPitch = result
+        clearTimeout(tunerTimeout)
+        const valid = result && Number.isFinite(result.frequency) && result.frequency > 0 && config.trackPitch
+        $("tuner").dataset.held = String(Boolean(valid && result.held))
+        if (!valid) {
+          $("tuner-note").textContent = "—"
+          $("tuner-detail").textContent = ""
+          $("tuner-state").textContent = !config.trackPitch
+            ? "Tracking off"
+            : !config.running
+              ? "Paused"
+              : "Waiting for pitch"
+          return
+        }
+        const pitch = musicalPitch(result.frequency)
+        $("tuner-note").textContent = pitch.name + pitch.octave
+        $("tuner-detail").textContent =
+          `${pitch.cents < 0 ? "−" : "+"}${Math.abs(pitch.cents).toFixed(0)}¢ · ${result.frequency.toFixed(1)} Hz`
+        $("tuner-state").textContent =
+          `${result.held ? "Held estimate" : "Measured"} · ${Math.round(result.confidence * 100)}% confidence`
+        tunerTimeout = setTimeout(() => updateTuner(null), 500)
+      }
+
       let audioContext
       let stream
       let source
-      let lowAnalyser
-      let highAnalyser
-      let lowSpectrum
-      let highSpectrum
+      let analyser
+      let spectrumData
       let timeDomainData
       let pitchCaptureNode
       let pitchWorker
       let pitchWorkerBusy = false
       let pitchResults = []
+      let pitchGeneration = 0
+      let columnTimes = new Float64Array(1).fill(NaN)
+      let columnGenerations = new Float64Array(1)
+      let pitchDirty = new Set()
+      let inputRequest = 0
+      let activePointer = null
+      let nextCaptureTime = 0
       let enabled = false
       let timer
       let writeX = 0
@@ -392,6 +509,7 @@
       let pitchHistory = new Float32Array(1)
       let pitchConfidence = new Float32Array(1)
       let pitchBreaks = new Uint8Array(1)
+      let pitchHeld = new Uint8Array(1)
       let autoFrame = 0
       let oscillator
       let oscillatorGain
@@ -595,8 +713,11 @@
         pitchHistory.fill(Number.NaN)
         pitchConfidence.fill(0)
         pitchBreaks.fill(0)
-        pitchResults = []
-        pitchWorker?.postMessage({ type: "reset" })
+        pitchHeld.fill(0)
+        columnTimes.fill(NaN)
+        pitchBufferCtx.clearRect(0, 0, historyWidth, historyHeight)
+        pitchDirty.clear()
+        resetPitchTracker()
         gl.bindTexture(gl.TEXTURE_2D, historyTexture)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, historyWidth, historyHeight, 0, gl.RED, gl.UNSIGNED_BYTE, null)
         drawSpectrogram()
@@ -604,13 +725,10 @@
       }
 
       function rebuildRowCache() {
-        if (!audioContext || !lowAnalyser || !highAnalyser) return
+        if (!audioContext || !analyser) return
         rowCache = Array.from({ length: historyHeight }, (_, row) => {
           const frequency = interpolateFrequency(row / Math.max(1, historyHeight - 1))
-          const lowBin = (frequency * lowAnalyser.fftSize) / audioContext.sampleRate
-          const highBin = (frequency * highAnalyser.fftSize) / audioContext.sampleRate
-          const blend = Math.max(0, Math.min(1, Math.log2(frequency / 350) / Math.log2(900 / 350)))
-          return { lowBin, highBin, blend }
+          return (frequency * analyser.fftSize) / audioContext.sampleRate
         })
       }
 
@@ -628,8 +746,8 @@
       async function initializePitchTracker() {
         if (!pitchWorker) {
           const workerSource = String.raw`
-            let minFrequency = 55
-            let maxFrequency = 5000
+            let minFrequency = 65
+            let maxFrequency = 1500
             let trackedFrequency = 0
             let trackedConfidence = 0
             let heldFrames = 0
@@ -648,7 +766,7 @@
               if (trackedFrequency > 0 && heldFrames < 3) {
                 heldFrames++
                 trackedConfidence *= 0.82
-                return { frequency: trackedFrequency, confidence: Math.max(0.17, trackedConfidence), breakBefore: false }
+                return { frequency: trackedFrequency, confidence: Math.max(0.17, trackedConfidence), breakBefore: false, held: true }
               }
               resetTracker()
               return null
@@ -657,7 +775,11 @@
             function stabilize(candidate) {
               const acquireConfidence = 0.62
               const releaseConfidence = 0.42
-              if (!candidate) return holdPitch()
+              if (!candidate) {
+                pendingFrequency = 0
+                pendingFrames = 0
+                return holdPitch()
+              }
               if (trackedFrequency === 0) {
                 if (candidate.confidence < acquireConfidence) return null
                 trackedFrequency = candidate.frequency
@@ -693,7 +815,7 @@
               pendingFrequency = 0
               pendingFrames = 0
               if (candidate.confidence < releaseConfidence) return holdPitch()
-              const smoothing = 0.25 + 0.3 * candidate.confidence
+              const smoothing = 0.8 + 0.15 * candidate.confidence
               trackedFrequency =
                 2 ** ((1 - smoothing) * Math.log2(trackedFrequency) + smoothing * Math.log2(candidate.frequency))
               trackedConfidence = 0.7 * trackedConfidence + 0.3 * candidate.confidence
@@ -713,7 +835,7 @@
               if (Math.sqrt(energy / samples.length) <= 1e-7) return stabilize(null)
 
               const minimumLag = Math.max(2, Math.floor(sampleRate / maxFrequency))
-              const maximumLag = Math.min(Math.floor(sampleRate / minFrequency), Math.floor(samples.length / 2))
+              const maximumLag = Math.min(Math.ceil(sampleRate / minFrequency) + 1, samples.length - 2)
               const nsdf = new Float32Array(maximumLag + 1)
               for (let lag = minimumLag; lag <= maximumLag; lag++) {
                 let correlation = 0
@@ -734,19 +856,24 @@
                 const denominator = nsdf[lag - 1] - 2 * nsdf[lag] + nsdf[lag + 1]
                 const offset = denominator === 0 ? 0 : 0.5 * (nsdf[lag - 1] - nsdf[lag + 1]) / denominator
                 const refinedLag = lag + Math.max(-0.5, Math.min(0.5, offset))
-                candidates.push({ frequency: sampleRate / refinedLag, confidence: nsdf[lag] })
+                const frequency = sampleRate / refinedLag
+                if (frequency >= minFrequency && frequency <= maxFrequency)
+                  candidates.push({ frequency, confidence: nsdf[lag] })
               }
               if (!candidates.length) return stabilize(null)
 
               const maximumClarity = Math.max(...candidates.map(candidate => candidate.confidence))
               const eligible = candidates.filter(candidate => candidate.confidence >= Math.max(0.5, 0.8 * maximumClarity))
-              let selected = eligible[0]
-              if (trackedFrequency > 0) {
+              // MPM's earliest strong period peak rejects integer-period multiples.
+              // Only use continuity among candidates near that preferred period.
+              const preferred = eligible[0]
+              let selected = preferred
+              if (preferred && trackedFrequency > 0) {
                 let bestScore = -Infinity
                 for (const candidate of eligible) {
+                  if (Math.abs(1200 * Math.log2(candidate.frequency / preferred.frequency)) > 180) continue
                   const distance = Math.abs(1200 * Math.log2(candidate.frequency / trackedFrequency))
-                  const transitionPenalty = Math.min(0.32, (0.22 * distance) / 1200)
-                  const score = candidate.confidence - transitionPenalty
+                  const score = candidate.confidence - Math.min(0.08, distance / 15000)
                   if (score > bestScore) {
                     bestScore = score
                     selected = candidate
@@ -764,8 +891,16 @@
               } else if (message.type === "reset") {
                 resetTracker()
               } else if (message.type === "samples") {
-                const result = analyze(message.samples, message.sampleRate)
-                self.postMessage({ result, time: message.time })
+                // Retain a long capture for bass acquisition, then follow nearby
+                // movement with four periods (at least 25 ms) to preserve vibrato.
+                const fullLength = message.samples.length
+                const length = trackedFrequency > 0
+                  ? Math.min(fullLength, Math.ceil(Math.max(0.025, 4 / trackedFrequency) * message.sampleRate))
+                  : fullLength
+                const samples = message.samples.subarray(fullLength - length)
+                const result = analyze(samples, message.sampleRate)
+                const time = message.time + (fullLength - length) / (2 * message.sampleRate)
+                self.postMessage({ result, time, generation: message.generation })
               }
             }
           `
@@ -774,8 +909,17 @@
           URL.revokeObjectURL(workerUrl)
           pitchWorker.onmessage = event => {
             pitchWorkerBusy = false
+            if (event.data.generation !== pitchGeneration || !trackingActive()) return
+            updateTuner(event.data.result)
             pitchResults.push(event.data)
-            if (pitchResults.length > 8) pitchResults.shift()
+            if (pitchResults.length > 32) pitchResults.shift()
+          }
+          pitchWorker.onerror = event => {
+            pitchWorkerBusy = false
+            config.trackPitch = false
+            $("track-pitch").checked = false
+            resetPitchTracker()
+            showError("Pitch tracker failed: " + event.message)
           }
         }
 
@@ -784,19 +928,38 @@
             class PitchCaptureProcessor extends AudioWorkletProcessor {
               constructor() {
                 super()
-                this.windowSize = 2048
+                // At least three periods at 20 Hz, independent of device rate.
+                this.windowSize = Math.max(2048, Math.ceil(sampleRate / 2 * 0.15))
                 this.targetRate = sampleRate / 2
                 this.buffer = new Float32Array(this.windowSize)
                 this.writeIndex = 0
                 this.filled = 0
                 this.samplesSincePost = 0
-                this.pairSum = 0
-                this.pairCount = 0
-                this.rate = 30
-                this.active = true
+                this.fir = new Float64Array(127)
+                this.delay = new Float32Array(127)
+                this.delayIndex = 0
+                this.phase = 0
+                let sum = 0
+                for (let k = 0; k < 127; k++) {
+                  const n = k - 63
+                  const sinc = n === 0 ? 0.44 : Math.sin(2 * Math.PI * 0.22 * n) / (Math.PI * n)
+                  const window = 0.42 - 0.5 * Math.cos(2 * Math.PI * k / 126) + 0.08 * Math.cos(4 * Math.PI * k / 126)
+                  this.fir[k] = sinc * window
+                  sum += this.fir[k]
+                }
+                for (let k = 0; k < 127; k++) this.fir[k] /= sum
+                this.generation = 0
+                this.rate = 60
+                this.active = false
                 this.port.onmessage = event => {
                   if (event.data.type === "config") {
                     this.rate = event.data.rate
+                    if (this.generation !== event.data.generation) {
+                      this.buffer.fill(0)
+                      this.delay.fill(0)
+                      this.writeIndex = this.filled = this.samplesSincePost = this.phase = this.delayIndex = 0
+                    }
+                    this.generation = event.data.generation
                     this.active = event.data.active
                   }
                 }
@@ -804,17 +967,20 @@
 
               process(inputs) {
                 const input = inputs[0][0]
-                if (!input) return true
+                if (!input || !this.active) return true
                 for (let i = 0; i < input.length; i++) {
-                  this.pairSum += input[i]
-                  this.pairCount++
-                  if (this.pairCount < 2) continue
-                  this.buffer[this.writeIndex] = this.pairSum * 0.5
+                  this.delay[this.delayIndex] = input[i]
+                  this.delayIndex = (this.delayIndex + 1) % this.delay.length
+                  if (++this.phase < 2) continue
+                  this.phase = 0
+                  let filtered = 0
+                  for (let k = 0; k < this.fir.length; k++)
+                    filtered += this.fir[k] * this.delay[(this.delayIndex - 1 - k + this.delay.length) % this.delay.length]
+                  this.buffer[this.writeIndex] = filtered
                   this.writeIndex = (this.writeIndex + 1) % this.windowSize
                   this.filled = Math.min(this.windowSize, this.filled + 1)
                   this.samplesSincePost++
-                  this.pairSum = 0
-                  this.pairCount = 0
+
                 }
 
                 const hop = Math.max(1, Math.round(this.targetRate / this.rate))
@@ -823,8 +989,8 @@
                   for (let i = 0; i < this.windowSize; i++) {
                     snapshot[i] = this.buffer[(this.writeIndex + i) % this.windowSize]
                   }
-                  const time = currentTime - this.windowSize / (2 * this.targetRate)
-                  this.port.postMessage({ samples: snapshot, sampleRate: this.targetRate, time }, [snapshot.buffer])
+                  const time = currentTime + input.length / sampleRate - 63 / sampleRate - (this.windowSize - 1) / (2 * this.targetRate)
+                  this.port.postMessage({ samples: snapshot, sampleRate: this.targetRate, time, generation: this.generation }, [snapshot.buffer])
                   this.samplesSincePost = 0
                 }
                 return true
@@ -840,7 +1006,7 @@
             numberOfOutputs: 0
           })
           pitchCaptureNode.port.onmessage = event => {
-            if (pitchWorkerBusy || !config.trackPitch) return
+            if (pitchWorkerBusy || !trackingActive() || event.data.generation !== pitchGeneration) return
             pitchWorkerBusy = true
             const message = event.data
             pitchWorker.postMessage({ type: "samples", ...message }, [message.samples.buffer])
@@ -849,28 +1015,60 @@
         updatePitchTrackerConfig()
       }
 
+      function trackingActive() {
+        return enabled && config.running && config.trackPitch && !document.hidden && audioContext?.state === "running"
+      }
+
+      function resetPitchTracker() {
+        pitchGeneration++
+        updateTuner(null)
+        pitchResults = []
+        pitchWorker?.postMessage({ type: "reset" })
+        updatePitchTrackerConfig()
+      }
+
       function updatePitchTrackerConfig() {
-        pitchCaptureNode?.port.postMessage({ type: "config", rate: config.rate, active: config.trackPitch })
+        pitchCaptureNode?.port.postMessage({
+          type: "config",
+          rate: config.rate,
+          active: trackingActive(),
+          generation: pitchGeneration
+        })
         pitchWorker?.postMessage({
           type: "config",
-          minFrequency: config.minFreq,
-          maxFrequency: config.maxFreq
+          minFrequency: config.pitchMinFreq,
+          maxFrequency: Math.min(config.pitchMaxFreq, (audioContext?.sampleRate ?? 48000) * 0.2)
         })
       }
 
       function applyPitchResults() {
-        pitchHistory[writeX] = Number.NaN
-        pitchConfidence[writeX] = 0
-        pitchBreaks[writeX] = 0
+        const remaining = []
+        const latestTime = columnTimes[writeX]
         for (const message of pitchResults) {
-          const age = Math.max(0, audioContext.currentTime - message.time)
-          const offset = Math.min(historyWidth - 1, Math.round(age * config.rate))
-          const index = (writeX - offset + historyWidth) % historyWidth
-          pitchHistory[index] = message.result?.frequency ?? Number.NaN
-          pitchConfidence[index] = message.result?.confidence ?? 0
-          pitchBreaks[index] = message.result?.breakBefore ? 1 : 0
+          if (message.generation !== pitchGeneration) continue
+          // The pitch window can be newer than the latest FFT window center.
+          if (message.time > latestTime) {
+            remaining.push(message)
+            continue
+          }
+          let best = -1
+          let distance = Infinity
+          for (let i = 0; i < historyWidth; i++) {
+            if (columnGenerations[i] !== message.generation) continue
+            const delta = Math.abs(columnTimes[i] - message.time)
+            if (delta < distance) {
+              distance = delta
+              best = i
+            }
+          }
+          if (best < 0 || distance > 1.5 / config.rate) continue
+          pitchHistory[best] = message.result?.frequency ?? NaN
+          pitchConfidence[best] = message.result?.confidence ?? 0
+          pitchBreaks[best] = message.result?.breakBefore ? 1 : 0
+          pitchHeld[best] = message.result?.held ? 1 : 0
+          pitchDirty.add(best)
         }
-        pitchResults = []
+        pitchResults = remaining
       }
 
       function updateAutomaticLevels(values, inputIsSilent) {
@@ -891,21 +1089,25 @@
 
       function captureColumn() {
         if (!enabled || !config.running || document.hidden || !rowCache.length) return
-        lowAnalyser.getFloatFrequencyData(lowSpectrum)
-        highAnalyser.getFloatFrequencyData(highSpectrum)
-        highAnalyser.getFloatTimeDomainData(timeDomainData)
+        analyser.getFloatFrequencyData(spectrumData)
+        analyser.getFloatTimeDomainData(timeDomainData)
         let timeDomainPeak = 0
         for (let i = 0; i < timeDomainData.length; i++) {
           timeDomainPeak = Math.max(timeDomainPeak, Math.abs(timeDomainData[i]))
         }
         const inputIsSilent = timeDomainPeak <= 1e-7
         for (let row = 0; row < historyHeight; row++) {
-          const mapping = rowCache[row]
-          const low = sampleSpectrum(lowSpectrum, mapping.lowBin)
-          const high = sampleSpectrum(highSpectrum, mapping.highBin)
-          dbColumn[row] = low + (high - low) * mapping.blend
+          dbColumn[row] = sampleSpectrum(spectrumData, rowCache[row])
         }
         updateAutomaticLevels(dbColumn, inputIsSilent)
+        columnTimes[writeX] = audioContext.currentTime - analyser.fftSize / (2 * audioContext.sampleRate)
+        columnGenerations[writeX] = pitchGeneration
+        pitchHistory[writeX] = NaN
+        pitchConfidence[writeX] = 0
+        pitchBreaks[writeX] = 0
+        pitchHeld[writeX] = 0
+        pitchDirty.add(writeX)
+        pitchDirty.add((writeX + 1) % historyWidth)
         applyPitchResults()
 
         for (let row = 0; row < historyHeight; row++) {
@@ -924,11 +1126,21 @@
 
       function scheduleCapture() {
         clearTimeout(timer)
-        const delay = enabled && config.running && !document.hidden ? 1000 / config.rate : 250
-        timer = setTimeout(() => {
-          captureColumn()
-          scheduleCapture()
-        }, delay)
+        if (!enabled || !config.running || document.hidden || audioContext?.state !== "running") {
+          nextCaptureTime = 0
+          return
+        }
+        const interval = 1000 / config.rate
+        const now = performance.now()
+        if (!nextCaptureTime || nextCaptureTime < now - interval) nextCaptureTime = now
+        timer = setTimeout(
+          () => {
+            captureColumn()
+            nextCaptureTime += 1000 / config.rate
+            scheduleCapture()
+          },
+          Math.max(0, nextCaptureTime - now)
+        )
       }
 
       function resize() {
@@ -946,6 +1158,9 @@
         pitchHistory = new Float32Array(historyWidth)
         pitchConfidence = new Float32Array(historyWidth)
         pitchBreaks = new Uint8Array(historyWidth)
+        pitchHeld = new Uint8Array(historyWidth)
+        columnTimes = new Float64Array(historyWidth).fill(NaN)
+        columnGenerations = new Float64Array(historyWidth)
         pitchBufferCanvas.width = historyWidth
         pitchBufferCanvas.height = historyHeight
         pitchCtx.imageSmoothingEnabled = false
@@ -987,63 +1202,67 @@
 
       function drawPitchTrack() {
         pitchCtx.clearRect(0, 0, pitchCanvas.width, pitchCanvas.height)
-        pitchBufferCtx.clearRect(0, 0, pitchBufferCanvas.width, pitchBufferCanvas.height)
-        if (!config.trackPitch || historyWidth <= 0) return
-
-        const path = new Path2D()
-        let drawing = false
-        let previousFrequency = 0
-        for (let sourceIndex = 0; sourceIndex < historyWidth; sourceIndex++) {
-          const frequency = pitchHistory[sourceIndex]
-          const confidence = pitchConfidence[sourceIndex]
-          if (sourceIndex === writeX || pitchBreaks[sourceIndex]) {
-            drawing = false
-            previousFrequency = 0
-          }
-          const discontinuity =
-            previousFrequency > 0 &&
-            Number.isFinite(frequency) &&
-            Math.abs(1200 * Math.log2(frequency / previousFrequency)) > 120
-          if (!Number.isFinite(frequency) || confidence < 0.16 || discontinuity) {
-            drawing = false
-            previousFrequency = 0
-            continue
-          }
-          const y = (frequencyToY(frequency) / pitchCanvas.clientHeight) * historyHeight
-          if (drawing) path.lineTo(sourceIndex, y)
-          else path.moveTo(sourceIndex, y)
-          drawing = true
-          previousFrequency = frequency
-        }
-
-        const firstFrequency = pitchHistory[0]
-        const lastFrequency = pitchHistory[historyWidth - 1]
-        if (
-          writeX !== 0 &&
-          !pitchBreaks[0] &&
-          pitchConfidence[0] >= 0.16 &&
-          pitchConfidence[historyWidth - 1] >= 0.16 &&
-          Number.isFinite(firstFrequency) &&
-          Number.isFinite(lastFrequency) &&
-          Math.abs(1200 * Math.log2(firstFrequency / lastFrequency)) <= 120
-        ) {
-          const firstY = (frequencyToY(firstFrequency) / pitchCanvas.clientHeight) * historyHeight
-          const lastY = (frequencyToY(lastFrequency) / pitchCanvas.clientHeight) * historyHeight
-          path.moveTo(historyWidth - 1, lastY)
-          path.lineTo(historyWidth, firstY)
-          path.moveTo(-1, lastY)
-          path.lineTo(0, firstY)
-        }
-
+        if (historyWidth <= 0) return
         const dpr = pitchCanvas.width / pitchCanvas.clientWidth
-        pitchBufferCtx.lineJoin = "round"
-        pitchBufferCtx.lineCap = "round"
-        pitchBufferCtx.strokeStyle = "rgb(0 0 0 / 85%)"
-        pitchBufferCtx.lineWidth = 4 * dpr
-        pitchBufferCtx.stroke(path)
-        pitchBufferCtx.strokeStyle = "rgb(255 244 170 / 95%)"
-        pitchBufferCtx.lineWidth = 1.5 * dpr
-        pitchBufferCtx.stroke(path)
+        // Repaint only strips affected by changed samples and their stroke radius.
+        const radius = Math.ceil(2 * dpr) + 2
+        const dirtyColumns = new Set()
+        for (const index of pitchDirty)
+          for (let dx = -radius; dx <= radius; dx++) dirtyColumns.add((index + dx + historyWidth) % historyWidth)
+        pitchDirty.clear()
+        const sorted = [...dirtyColumns].sort((a, b) => a - b)
+        for (let k = 0; k < sorted.length;) {
+          const left = sorted[k++]
+          let right = left + 1
+          while (k < sorted.length && sorted[k] === right) {
+            right++
+            k++
+          }
+          pitchBufferCtx.save()
+          pitchBufferCtx.beginPath()
+          pitchBufferCtx.rect(left, 0, right - left, historyHeight)
+          pitchBufferCtx.clip()
+          pitchBufferCtx.clearRect(left, 0, right - left, historyHeight)
+          const paths = Array.from({ length: 8 }, () => new Path2D())
+          for (let x = left - radius; x <= right + radius; x++) {
+            const index = ((x % historyWidth) + historyWidth) % historyWidth
+            const previous = (index - 1 + historyWidth) % historyWidth
+            const frequency = pitchHistory[index]
+            const priorFrequency = pitchHistory[previous]
+            if (
+              index === writeX ||
+              pitchBreaks[index] ||
+              pitchConfidence[index] < 0.16 ||
+              pitchConfidence[previous] < 0.16 ||
+              !Number.isFinite(frequency) ||
+              !Number.isFinite(priorFrequency) ||
+              Math.abs(1200 * Math.log2(frequency / priorFrequency)) > 120
+            )
+              continue
+            const y = (frequencyToY(frequency) / pitchCanvas.clientHeight) * historyHeight
+            const priorY = (frequencyToY(priorFrequency) / pitchCanvas.clientHeight) * historyHeight
+            const held = pitchHeld[index] || pitchHeld[previous]
+            // Pattern is anchored to storage columns so it cannot crawl as history scrolls.
+            if (held && index % Math.max(2, Math.round(7 * dpr)) >= Math.round(3 * dpr)) continue
+            const confidence = Math.min(pitchConfidence[index], pitchConfidence[previous])
+            const bucket = Math.min(7, Math.max(0, Math.floor(confidence * 8)))
+            paths[bucket].moveTo(x - 1, priorY)
+            paths[bucket].lineTo(x, y)
+          }
+          pitchBufferCtx.lineJoin = "round"
+          pitchBufferCtx.lineCap = "round"
+          for (let bucket = 0; bucket < paths.length; bucket++) {
+            pitchBufferCtx.globalAlpha = 0.25 + (0.7 * (bucket + 1)) / paths.length
+            pitchBufferCtx.strokeStyle = "rgb(0 0 0 / 85%)"
+            pitchBufferCtx.lineWidth = 4 * dpr
+            pitchBufferCtx.stroke(paths[bucket])
+            pitchBufferCtx.strokeStyle = "rgb(255 244 170)"
+            pitchBufferCtx.lineWidth = 1.5 * dpr
+            pitchBufferCtx.stroke(paths[bucket])
+          }
+          pitchBufferCtx.restore()
+        }
+        if (!config.trackPitch) return
 
         const rightWidth = historyWidth - writeX
         const rightDestinationWidth = Math.round((pitchCanvas.width * rightWidth) / historyWidth)
@@ -1118,9 +1337,12 @@
       }
 
       async function startInput(deviceId = "") {
+        const request = ++inputRequest
         enabled = false
-        if (stream) stream.getTracks().forEach(track => track.stop())
-        stream = await navigator.mediaDevices.getUserMedia({
+        stopOscillator()
+        resetPitchTracker()
+        scheduleCapture()
+        const nextStream = await navigator.mediaDevices.getUserMedia({
           audio: {
             ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
             channelCount: 1,
@@ -1129,51 +1351,78 @@
             autoGainControl: false
           }
         })
-        if (!audioContext) audioContext = new AudioContext({ latencyHint: "interactive" })
-        await audioContext.resume()
+        if (request !== inputRequest) {
+          nextStream.getTracks().forEach(track => track.stop())
+          return
+        }
+        if (stream) stream.getTracks().forEach(track => track.stop())
+        stream = nextStream
+        if (!audioContext) {
+          audioContext = new AudioContext({ latencyHint: "interactive" })
+          audioContext.onstatechange = () => {
+            resetPitchTracker()
+            updateAudioStatus()
+            scheduleCapture()
+          }
+        }
+        // A pending autoplay resume must not leave the activation button disabled.
+        audioContext.resume().catch(showError)
         source?.disconnect()
         source = audioContext.createMediaStreamSource(stream)
-        lowAnalyser = audioContext.createAnalyser()
-        highAnalyser = audioContext.createAnalyser()
-        lowAnalyser.fftSize = 32768
-        highAnalyser.fftSize = 4096
-        lowAnalyser.smoothingTimeConstant = 0
-        highAnalyser.smoothingTimeConstant = 0
-        source.connect(lowAnalyser)
-        source.connect(highAnalyser)
+        analyser = audioContext.createAnalyser()
+        analyser.fftSize = 8192
+        analyser.smoothingTimeConstant = 0
+        source.connect(analyser)
         await initializePitchTracker()
+        if (request !== inputRequest) return
         source.connect(pitchCaptureNode)
-        pitchWorker.postMessage({ type: "reset" })
-        pitchResults = []
-        lowSpectrum = new Float32Array(lowAnalyser.frequencyBinCount)
-        highSpectrum = new Float32Array(highAnalyser.frequencyBinCount)
-        timeDomainData = new Float32Array(highAnalyser.fftSize)
+        resetPitchTracker()
+        spectrumData = new Float32Array(analyser.frequencyBinCount)
+        timeDomainData = new Float32Array(analyser.fftSize)
         enabled = true
         $("error").style.display = "none"
-        $("enable").textContent = "Enabled"
-        $("enable").classList.remove("primary")
-        $("status").textContent = `${Math.round(audioContext.sampleRate / 1000)} kHz · dual FFT + MPM`
+        updateAudioStatus()
+        updatePitchTrackerConfig()
         await refreshDevices()
         rebuildRowCache()
         scheduleCapture()
       }
 
+      function updateAudioStatus() {
+        if (!enabled) return
+        const running = audioContext.state === "running"
+        $("enable").textContent = running ? "Enabled" : "Resume"
+        $("enable").disabled = running
+        $("enable").classList.toggle("primary", !running)
+        $("status").textContent = running ? "Listening" : "Click Resume to start audio"
+      }
+
       async function enableAudio(deviceId = "") {
+        const request = inputRequest + 1
         const button = $("enable")
         button.disabled = true
+        $("device").disabled = true
         button.textContent = "Starting…"
         $("status").textContent = "Requesting microphone…"
         try {
           await startInput(deviceId)
         } catch (error) {
+          if (request !== inputRequest) return
           enabled = false
+          source?.disconnect()
+          stream?.getTracks().forEach(track => track.stop())
+          resetPitchTracker()
           button.textContent = "Retry"
           button.classList.add("primary")
           $("status").textContent = "Microphone unavailable"
           showError(error)
         } finally {
-          button.disabled = false
-          scheduleCapture()
+          if (request === inputRequest) {
+            button.disabled = false
+            $("device").disabled = false
+            updateAudioStatus()
+            scheduleCapture()
+          }
         }
       }
 
@@ -1184,9 +1433,19 @@
       }
 
       async function startOscillator(event) {
-        if (!enabled || oscillator || event.button !== 0) return
-        await audioContext.resume()
-        hitArea.setPointerCapture(event.pointerId)
+        if (!enabled || oscillator || activePointer !== null || event.button !== 0) return
+        const pointerId = event.pointerId
+        activePointer = pointerId
+        pointer = { x: event.clientX, y: event.clientY, inside: true }
+        hitArea.setPointerCapture(pointerId)
+        try {
+          await audioContext.resume()
+        } catch (error) {
+          activePointer = null
+          showError(error)
+          return
+        }
+        if (activePointer !== pointerId || !enabled) return
         oscillator = audioContext.createOscillator()
         oscillatorGain = audioContext.createGain()
         oscillator.type = config.wave
@@ -1199,8 +1458,14 @@
       }
 
       function stopOscillator() {
+        activePointer = null
         if (!oscillator) return
         const stoppingOscillator = oscillator
+        const stoppingGain = oscillatorGain
+        stoppingOscillator.onended = () => {
+          stoppingOscillator.disconnect()
+          stoppingGain.disconnect()
+        }
         oscillatorGain.gain.cancelScheduledValues(audioContext.currentTime)
         oscillatorGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.012)
         stoppingOscillator.stop(audioContext.currentTime + 0.08)
@@ -1230,6 +1495,13 @@
         $(id).addEventListener("input", event => {
           config[key] = Number(event.target.value)
           updateOutputs()
+          if (key === "volume" && oscillatorGain)
+            oscillatorGain.gain.setTargetAtTime(10 ** (config.volume / 20), audioContext.currentTime, 0.008)
+          if (key === "rate") {
+            nextCaptureTime = 0
+            resetPitchTracker()
+            scheduleCapture()
+          }
           if (key === "rate" || key === "minFreq" || key === "maxFreq") updatePitchTrackerConfig()
           if (geometry) {
             rebuildRowCache()
@@ -1237,6 +1509,7 @@
           }
           if (grid) drawGrid()
           if (shader) drawSpectrogram()
+          if (key === "tuning") updateTuner()
           drawCursor()
         })
       }
@@ -1269,6 +1542,7 @@
 
       $("running").addEventListener("change", event => {
         config.running = event.target.checked
+        resetPitchTracker()
         scheduleCapture()
       })
       $("logarithmic").addEventListener("change", event => {
@@ -1296,7 +1570,10 @@
         if (oscillator) oscillator.type = config.wave
       })
       $("device").addEventListener("change", event => enableAudio(event.target.value))
-      $("enable").addEventListener("click", () => enableAudio($("device").value))
+      $("enable").addEventListener("click", () => {
+        if (enabled && audioContext) audioContext.resume().catch(showError)
+        else enableAudio($("device").value)
+      })
       $("clear").addEventListener("click", clearHistory)
       $("collapse").addEventListener("click", () => {
         const panel = document.querySelector(".panel")
@@ -1320,13 +1597,30 @@
         drawCursor()
       })
       hitArea.addEventListener("pointerdown", startOscillator)
-      hitArea.addEventListener("pointerup", stopOscillator)
-      hitArea.addEventListener("pointercancel", stopOscillator)
+      const releasePointer = event => {
+        if (event.pointerId === activePointer) stopOscillator()
+      }
+      hitArea.addEventListener("pointerup", releasePointer)
+      hitArea.addEventListener("pointercancel", releasePointer)
+      hitArea.addEventListener("lostpointercapture", releasePointer)
       window.addEventListener("blur", stopOscillator)
       window.addEventListener("resize", resize)
-      document.addEventListener("visibilitychange", scheduleCapture)
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopOscillator()
+        resetPitchTracker()
+        scheduleCapture()
+      })
 
+      // Bubble listeners run after each control's own configuration handler.
+      for (const eventName of ["input", "change"])
+        $("settings").addEventListener(eventName, event => {
+          if (Object.values(settingControls).includes(event.target.id)) saveSettings()
+        })
+
+      restoreSettings()
+      syncSettingControls()
       updateOutputs()
+      updateTuner(null)
       resize()
       scheduleCapture()
       enableAudio()
